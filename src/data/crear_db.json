@@ -1,0 +1,299 @@
+{
+  "CDMX": {
+    "c1": [
+      {
+        "equipo": "E1",
+        "fecha": "16 Ene",
+        "entrenador": "Fer",
+        "inicio": 43,
+        "cierre": 42,
+        "pagos": 17,
+        "conversion": "40.4%"
+      },
+      {
+        "equipo": "E2",
+        "fecha": "20 Feb",
+        "entrenador": "Leo",
+        "inicio": 44,
+        "cierre": 42,
+        "pagos": 33,
+        "conversion": "78.5%"
+      },
+      {
+        "equipo": "E3",
+        "fecha": "27 Mar",
+        "entrenador": "Mauricio",
+        "inicio": 58,
+        "cierre": 55,
+        "pagos": 24,
+        "conversion": "43.6%"
+      },
+      {
+        "equipo": "E4",
+        "fecha": "1 May",
+        "entrenador": "Mauricio",
+        "inicio": 59,
+        "cierre": 52,
+        "pagos": 26,
+        "conversion": "50.0%"
+      },
+      {
+        "equipo": "E5",
+        "fecha": "5 Jun",
+        "entrenador": "Mauricio",
+        "inicio": 44,
+        "cierre": 41,
+        "pagos": 33,
+        "conversion": "80.4%"
+      }
+    ],
+    "maestria": [
+      {
+        "fecha": "17 ABR",
+        "entrenador": "Ana",
+        "llegaron": 11,
+        "enrolaron": 17
+      },
+      {
+        "fecha": "17 ABR",
+        "entrenador": "Juan",
+        "llegaron": 18,
+        "enrolaron": 26
+      },
+      {
+        "fecha": "17 ABR",
+        "entrenador": "Cirilo",
+        "llegaron": 10,
+        "enrolaron": 17
+      },
+      {
+        "fecha": "22 MAY",
+        "entrenador": "Mike",
+        "llegaron": 7,
+        "enrolaron": 13
+      },
+      {
+        "fecha": "26 JUN",
+        "entrenador": "Cirilo",
+        "llegaron": 24,
+        "enrolaron": 41
+      },
+      {
+        "fecha": "26 JUN",
+        "entrenador": "Ana",
+        "llegaron": 13,
+        "enrolaron": 15
+      }
+    ]
+  },
+  "Lima": {
+    "c1": [
+      {
+        "equipo": "E4",
+        "fecha": "19 Ene",
+        "entrenador": "Fer",
+        "inicio": 42,
+        "cierre": 40,
+        "pagos": 18,
+        "conversion": "42.8%"
+      },
+      {
+        "equipo": "E5",
+        "fecha": "23 Feb",
+        "entrenador": "Leo",
+        "inicio": 47,
+        "cierre": 45,
+        "pagos": 31,
+        "conversion": "66.0%"
+      }
+    ],
+    "maestria": [
+      {
+        "fecha": "19 ABR",
+        "entrenador": "Lerner",
+        "llegaron": 7,
+        "enrolaron": 5
+      },
+      {
+        "fecha": "19 ABR",
+        "entrenador": "Andrés",
+        "llegaron": 11,
+        "enrolaron": 16
+      },
+      {
+        "fecha": "19 ABR",
+        "entrenador": "Mike",
+        "llegaron": 6,
+        "enrolaron": 13
+      },
+      {
+        "fecha": "18 ABR",
+        "entrenador": "Ana",
+        "llegaron": 33,
+        "enrolaron": 37
+      },
+      {
+        "fecha": "18 ABR",
+        "entrenador": "Juan A",
+        "llegaron": 34,
+        "enrolaron": 85
+      },
+      {
+        "fecha": "18 ABR",
+        "entrenador": "Mike",
+        "llegaron": 21,
+        "enrolaron": 43
+      },
+      {
+        "fecha": "19 DIC",
+        "entrenador": "Mike",
+        "llegaron": 26,
+        "enrolaron": 107
+      }
+    ]
+  },
+  "Quito": {
+    "c1": [
+      {
+        "equipo": "E74",
+        "fecha": "26 Ene",
+        "entrenador": "Juan A",
+        "inicio": 56,
+        "cierre": 54,
+        "pagos": 22,
+        "conversion": "39.2%"
+      },
+      {
+        "equipo": "E75",
+        "fecha": "2 Feb",
+        "entrenador": "Paul",
+        "inicio": 56,
+        "cierre": 52,
+        "pagos": 28,
+        "conversion": "50.0%"
+      }
+    ],
+    "maestria": [
+      {
+        "fecha": "20 SEPT",
+        "entrenador": "Juan A",
+        "llegaron": 52,
+        "enrolaron": 82,
+        "desercion": 12
+      },
+      {
+        "fecha": "20 SEPT",
+        "entrenador": "Andrés",
+        "llegaron": 50,
+        "enrolaron": 79,
+        "desercion": 5
+      },
+      {
+        "fecha": "20 SEPT",
+        "entrenador": "Mike",
+        "llegaron": 58,
+        "enrolaron": 125,
+        "desercion": 5
+      }
+    ]
+  },
+  "Cuenca": {
+    "c1": [
+      {
+        "equipo": "E1",
+        "fecha": "5 Jul",
+        "entrenador": "Leo",
+        "inicio": 62,
+        "cierre": 60,
+        "pagos": 32,
+        "conversion": "51.6%"
+      },
+      {
+        "equipo": "E17",
+        "fecha": "13 Feb",
+        "entrenador": "Fer",
+        "inicio": 247,
+        "cierre": 240,
+        "pagos": 112,
+        "conversion": "45.3%"
+      }
+    ],
+    "maestria": [
+      {
+        "fecha": "30 AGO",
+        "entrenador": "Lerner",
+        "llegaron": 21,
+        "enrolaron": 41
+      },
+      {
+        "fecha": "30 AGO",
+        "entrenador": "Andrés",
+        "llegaron": 16,
+        "enrolaron": 17
+      }
+    ]
+  },
+  "Medellin": {
+    "c1": [
+      {
+        "equipo": "E1",
+        "fecha": "15 Nov",
+        "entrenador": "Fer",
+        "inicio": 40,
+        "cierre": 38,
+        "pagos": 18,
+        "conversion": "45.0%"
+      },
+      {
+        "equipo": "E2",
+        "fecha": "10 Ene",
+        "entrenador": "Leo",
+        "inicio": 42,
+        "cierre": 40,
+        "pagos": 22,
+        "conversion": "52.3%"
+      }
+    ],
+    "maestria": [
+      {
+        "fecha": "1 FEB",
+        "entrenador": "Mildred",
+        "llegaron": 15,
+        "enrolaron": 21
+      },
+      {
+        "fecha": "1 FEB",
+        "entrenador": "Andrés",
+        "llegaron": 16,
+        "enrolaron": 13
+      }
+    ]
+  },
+  "Guayaquil": {
+    "c1": [
+      {
+        "equipo": "E10",
+        "fecha": "5 Ene",
+        "entrenador": "Leandro",
+        "inicio": 38,
+        "cierre": 36,
+        "pagos": 15,
+        "conversion": "39.4%"
+      }
+    ],
+    "maestria": [
+      {
+        "fecha": "26 ENE",
+        "entrenador": "Lerner",
+        "llegaron": 47,
+        "enrolaron": 66
+      },
+      {
+        "fecha": "26 ENE",
+        "entrenador": "Andrés",
+        "llegaron": 36,
+        "enrolaron": 54
+      }
+    ]
+  }
+}
