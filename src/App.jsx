@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Legend 
@@ -8,7 +8,10 @@ import {
   LayoutDashboard, FileText, Settings, Globe, PieChart, ExternalLink, Filter 
 } from 'lucide-react';
 
-// --- MOCK DATA BASADO EN TU CARPETA DE DRIVE Y MÉTRICAS DE NEGOCIO ---
+// --- API URL DE APPS SCRIPT ---
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweuSj-dsQKgKURgx61P4SBU9_CMlmHm6RxlW5Wshse7TArLleik-lrnr7S1fOFes15aw/exec';
+
+// --- MOCK DATA PARA GRÁFICOS ---
 const globalKpis = [
   { title: 'Ingresos Totales (Q2)', value: '$1.2M', trend: '+15.3%', isPositive: true, icon: DollarSign, color: 'text-green-400' },
   { title: 'Participantes Activos', value: '450', trend: '+5.2%', isPositive: true, icon: Users, color: 'text-blue-400' },
@@ -33,19 +36,42 @@ const regionalData = [
   { name: 'Medellín', ingresos: 170, participantes: 80 },
 ];
 
-const fileData = [
-  { id: 1, name: 'MAESTRIA LIMA.xlsx', region: 'Perú', category: 'Maestría Estratégica', status: 'Actualizado', date: '29/06/2026', link: '#' },
-  { id: 2, name: 'REPORTE CAP 1-2 2026.xlsx', region: 'Global', category: 'Control Operativo', status: 'Actualizado', date: '29/06/2026', link: '#' },
-  { id: 3, name: 'MJ CDMX.xlsx', region: 'México', category: 'Archivo Regional', status: 'Actualizado', date: '29/06/2026', link: '#' },
-  { id: 4, name: 'MAESTRIA GYE.xlsx', region: 'Ecuador', category: 'Maestría Estratégica', status: 'Actualizado', date: '27/06/2026', link: '#' },
-  { id: 5, name: 'MAESTRIA QUITO.xlsx', region: 'Ecuador', category: 'Maestría Estratégica', status: 'Actualizado', date: '27/06/2026', link: '#' },
-  { id: 6, name: 'MAESTRIA CUENCA.xlsx', region: 'Ecuador', category: 'Maestría Estratégica', status: 'Actualizado', date: '27/06/2026', link: '#' },
-  { id: 7, name: 'MJ MEDELLIN.xlsx', region: 'Colombia', category: 'Archivo Regional', status: 'Revisión Pendiente', date: '22/06/2026', link: '#' },
-  { id: 8, name: 'Dashboard Estadísticas - Fer.gs', region: 'Global', category: 'Control Operativo', status: 'Actualizado', date: '29/06/2026', link: '#' },
-];
+// Los archivos ahora se cargarán desde la API en vivo
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [fileData, setFileData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(SCRIPT_URL)
+      .then(res => res.json())
+      .then(data => {
+        const formattedData = data.map((item, index) => {
+          let region = 'Global';
+          if (item["PROYECTO / CIUDAD"].toUpperCase().includes('LIMA')) region = 'Perú';
+          else if (item["PROYECTO / CIUDAD"].toUpperCase().includes('CDMX')) region = 'México';
+          else if (item["PROYECTO / CIUDAD"].toUpperCase().includes('MEDELLIN')) region = 'Colombia';
+          else if (item["PROYECTO / CIUDAD"].toUpperCase().includes('QUITO') || item["PROYECTO / CIUDAD"].toUpperCase().includes('GYE') || item["PROYECTO / CIUDAD"].toUpperCase().includes('CUENCA')) region = 'Ecuador';
+
+          return {
+            id: index,
+            name: item["PROYECTO / CIUDAD"],
+            region: region,
+            category: item["CATEGORÍA"],
+            status: item["ESTADO"],
+            date: item["ÚLTIMA ACTUALIZACIÓN"] ? new Date(item["ÚLTIMA ACTUALIZACIÓN"]).toLocaleDateString('es-ES') : 'N/A',
+            link: item["ENLACE EJECUTIVO"]
+          };
+        });
+        setFileData(formattedData);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      });
+  }, []);
 
   const getStatusBadge = (status) => {
     if (status === 'Actualizado') return <span className="px-3 py-1 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30 rounded-full text-xs font-bold">Actualizado</span>;
@@ -244,7 +270,16 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2A3143]/50">
-                  {fileData.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase())).map((file) => (
+                  {loading ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <div className="w-8 h-8 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-slate-400 font-medium text-sm animate-pulse">Sincronizando con Google Drive en tiempo real...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : fileData.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase())).map((file) => (
                     <tr key={file.id} className="hover:bg-[#3B82F6]/5 transition-colors group">
                       <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
                         <FileText size={18} className="text-slate-500 group-hover:text-[#3B82F6] transition-colors" />
@@ -255,7 +290,7 @@ export default function App() {
                       <td className="px-6 py-4">{getStatusBadge(file.status)}</td>
                       <td className="px-6 py-4 text-slate-400 text-sm">{file.date}</td>
                       <td className="px-6 py-4 text-right">
-                        <a href={file.link} className="text-[#3B82F6] hover:text-white font-semibold text-sm transition-colors">
+                        <a href={file.link} target="_blank" rel="noopener noreferrer" className="text-[#3B82F6] hover:text-white font-semibold text-sm transition-colors">
                           Abrir
                         </a>
                       </td>
