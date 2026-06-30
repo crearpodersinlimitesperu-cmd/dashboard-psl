@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import { 
   Activity, Users, DollarSign, CheckCircle, Search, Bell, 
-  LayoutDashboard, FileText, Settings, Globe, PieChart, ExternalLink, Filter 
+  LayoutDashboard, FileText, Settings, Globe, PieChart, ExternalLink, Filter,
+  Menu, X, Plane, Shield, Building, MapPin, Briefcase
 } from 'lucide-react';
 
 // --- API URL DE APPS SCRIPT ---
@@ -36,12 +37,11 @@ const regionalData = [
   { name: 'Medellín', ingresos: 170, participantes: 80 },
 ];
 
-// Los archivos ahora se cargarán desde la API en vivo
-
 export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [fileData, setFileData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch(SCRIPT_URL)
@@ -74,30 +74,49 @@ export default function App() {
   }, []);
 
   const getStatusBadge = (status) => {
-    if (status === 'Actualizado') return <span className="px-3 py-1 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30 rounded-full text-xs font-bold">Actualizado</span>;
-    return <span className="px-3 py-1 bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30 rounded-full text-xs font-bold">Pendiente</span>;
+    if (status === 'Actualizado') return <span className="px-3 py-1 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap">Actualizado</span>;
+    return <span className="px-3 py-1 bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap">Pendiente</span>;
   };
 
   const getCategoryBadge = (category) => {
-    if (category === 'Maestría Estratégica') return <span className="px-3 py-1 bg-[#8B5CF6]/20 text-[#8B5CF6] rounded-md text-xs font-semibold">{category}</span>;
-    if (category === 'Archivo Regional') return <span className="px-3 py-1 bg-[#3B82F6]/20 text-[#3B82F6] rounded-md text-xs font-semibold">{category}</span>;
-    return <span className="px-3 py-1 bg-[#F59E0B]/20 text-[#F59E0B] rounded-md text-xs font-semibold">{category}</span>;
+    if (category === 'Maestría Estratégica') return <span className="px-2 sm:px-3 py-1 bg-[#8B5CF6]/20 text-[#8B5CF6] rounded-md text-[10px] sm:text-xs font-semibold whitespace-nowrap">{category}</span>;
+    if (category === 'Archivo Regional') return <span className="px-2 sm:px-3 py-1 bg-[#3B82F6]/20 text-[#3B82F6] rounded-md text-[10px] sm:text-xs font-semibold whitespace-nowrap">{category}</span>;
+    return <span className="px-2 sm:px-3 py-1 bg-[#F59E0B]/20 text-[#F59E0B] rounded-md text-[10px] sm:text-xs font-semibold whitespace-nowrap">{category}</span>;
   };
 
   return (
     <div className="flex h-screen bg-[#0B0F19] text-[#F8FAFC] font-sans overflow-hidden">
       
+      {/* MOBILE OVERLAY */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-64 bg-[#151A2D] border-r border-[#2A3143] flex flex-col">
-        <div className="p-6 border-b border-[#2A3143]">
-          <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-            <Globe className="text-[#3B82F6]" />
-            CREAR <span className="text-[#10B981]">PSL</span>
-          </h1>
-          <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest">Transformación Global</p>
+      <aside className={`fixed lg:static top-0 left-0 h-full w-72 lg:w-64 bg-[#151A2D] border-r border-[#2A3143] flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+        <div className="p-6 border-b border-[#2A3143] flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#10B981] flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Globe size={18} className="text-white" />
+              </div>
+              <span className="leading-none">
+                CREAR <br/><span className="text-[#10B981] text-sm">Poder Sin Límites</span>
+              </span>
+            </h1>
+          </div>
+          <button 
+            className="lg:hidden text-slate-400 hover:text-white bg-[#0B0F19] p-2 rounded-lg"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X size={20} />
+          </button>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <a href="#" className="flex items-center gap-3 px-4 py-3 bg-[#3B82F6]/10 text-[#3B82F6] rounded-lg font-medium border border-[#3B82F6]/20 transition-all">
             <LayoutDashboard size={18} /> Resumen Global
           </a>
@@ -108,44 +127,70 @@ export default function App() {
             <PieChart size={18} /> Analítica Regional
           </a>
           <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800/50 hover:text-white rounded-lg font-medium transition-all">
-            <FileText size={18} /> Directorio de Archivos
+            <FileText size={18} /> Directorio Maestro
           </a>
         </nav>
 
-        <div className="p-4 border-t border-[#2A3143]">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800/50 hover:text-white rounded-lg font-medium transition-all">
-            <Settings size={18} /> Configuración
-          </a>
+        {/* PERFIL CEO - SIDEBAR */}
+        <div className="p-5 border-t border-[#2A3143] bg-[#0B0F19]/50">
+           <div className="flex items-center gap-3 mb-4">
+             <div className="w-12 h-12 rounded-full border-2 border-[#3B82F6] bg-slate-800 flex items-center justify-center font-bold text-lg text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+               FA
+             </div>
+             <div>
+               <p className="font-bold text-white text-sm">Fernando Aragón</p>
+               <p className="text-xs text-[#3B82F6] font-semibold">CEO y Socio</p>
+             </div>
+           </div>
+           <div className="space-y-2 text-[11px] text-slate-400">
+             <p className="flex items-center gap-2"><MapPin size={12} className="text-[#10B981]" /> Residencia: Buenos Aires</p>
+             <p className="flex items-center gap-2"><Briefcase size={12} className="text-[#8B5CF6]" /> Facilitador Transformación</p>
+           </div>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
+      <main className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
         
         {/* TOPBAR */}
-        <header className="h-20 bg-[#151A2D]/80 backdrop-blur-md border-b border-[#2A3143] flex items-center justify-between px-8 sticky top-0 z-10">
-          <div className="flex items-center bg-[#0B0F19] border border-[#2A3143] rounded-lg px-4 py-2 w-96 focus-within:border-[#3B82F6] transition-colors">
-            <Search size={16} className="text-slate-500 mr-3" />
-            <input 
-              type="text" 
-              placeholder="Buscar proyectos, métricas o archivos..." 
-              className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-slate-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <header className="h-16 lg:h-20 bg-[#151A2D]/90 backdrop-blur-md border-b border-[#2A3143] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30 w-full">
+          <div className="flex items-center gap-4">
+            <button 
+              className="lg:hidden text-slate-400 hover:text-white p-2 -ml-2"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <div className="hidden md:flex items-center bg-[#0B0F19] border border-[#2A3143] rounded-lg px-4 py-2 w-96 focus-within:border-[#3B82F6] transition-colors">
+              <Search size={16} className="text-slate-500 mr-3" />
+              <input 
+                type="text" 
+                placeholder="Buscar proyectos, métricas o archivos..." 
+                className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-slate-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            {/* Mobile Title */}
+            <div className="md:hidden font-bold text-white flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gradient-to-br from-[#3B82F6] to-[#10B981] flex items-center justify-center">
+                <Globe size={12} className="text-white" />
+              </div>
+              CREAR PSL
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
+          <div className="flex items-center gap-4 lg:gap-6">
+            <button className="relative p-2 text-slate-400 hover:text-white transition-colors hidden sm:block">
               <Bell size={20} />
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#151A2D]"></span>
             </button>
-            <div className="flex items-center gap-3 pl-6 border-l border-[#2A3143]">
-              <div className="text-right">
+            <div className="flex items-center gap-3 sm:pl-6 sm:border-l border-[#2A3143]">
+              <div className="hidden sm:block text-right">
                 <p className="text-sm font-bold text-white">Fer Aragón</p>
-                <p className="text-xs text-[#3B82F6]">CEO Dashboard</p>
+                <p className="text-xs text-[#3B82F6]">Command Center</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center text-white font-bold shadow-lg shadow-[#3B82F6]/20">
+              <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-tr from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#3B82F6]/20">
                 FA
               </div>
             </div>
@@ -153,29 +198,76 @@ export default function App() {
         </header>
 
         {/* SCROLLABLE DASHBOARD AREA */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8 pb-20 lg:pb-8">
           
           {/* HEADER TITLES */}
           <div>
-            <h2 className="text-3xl font-black text-white">Command Center</h2>
-            <p className="text-slate-400 mt-1">Inteligencia Operativa y Control Regional - {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</p>
+            <h2 className="text-2xl lg:text-3xl font-black text-white">Dashboard Ejecutivo</h2>
+            <p className="text-sm lg:text-base text-slate-400 mt-1">Inteligencia Operativa y Control Regional - {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</p>
+          </div>
+
+          {/* LOGÍSTICA DEL CEO (NUEVO SEGMENTO SEGÚN PERFIL) */}
+          <div className="bg-gradient-to-r from-[#151A2D] to-[#1e243b] border border-[#2A3143] rounded-xl p-5 lg:p-6 shadow-xl relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+            
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4 lg:mb-6">
+              <Globe className="text-[#3B82F6]" size={20} />
+              Logística y Operaciones (Sede Lima)
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 relative z-10">
+              <div className="bg-[#0B0F19]/80 p-4 rounded-lg border border-[#2A3143]/50 flex items-start gap-4">
+                <div className="bg-[#3B82F6]/20 p-3 rounded-lg text-[#3B82F6]">
+                  <Plane size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Ruta Frecuente</p>
+                  <p className="text-white font-bold mt-1">Buenos Aires (EZE/AEP) <br/> ↳ Lima (LIM)</p>
+                  <p className="text-xs text-[#3B82F6] mt-1 font-medium">Operado por LATAM Airlines</p>
+                </div>
+              </div>
+
+              <div className="bg-[#0B0F19]/80 p-4 rounded-lg border border-[#2A3143]/50 flex items-start gap-4">
+                <div className="bg-[#10B981]/20 p-3 rounded-lg text-[#10B981]">
+                  <Building size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Centro de Operaciones</p>
+                  <p className="text-white font-bold mt-1">Hotel José Antonio Deluxe</p>
+                  <p className="text-xs text-[#10B981] mt-1 font-medium">Miraflores, Lima</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Facturación: CREACION CUANTICA E.I.R.L.</p>
+                </div>
+              </div>
+
+              <div className="bg-[#0B0F19]/80 p-4 rounded-lg border border-[#2A3143]/50 flex items-start gap-4">
+                <div className="bg-[#8B5CF6]/20 p-3 rounded-lg text-[#8B5CF6]">
+                  <Shield size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Cobertura Premium</p>
+                  <p className="text-white font-bold mt-1">AXA Partners Upgrade</p>
+                  <p className="text-xs text-[#8B5CF6] mt-1 font-medium">Límite: USD 1.000.000</p>
+                  <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">Voucher: <span className="text-white font-mono bg-slate-800 px-1 rounded">6916346</span></p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* KPI CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {globalKpis.map((kpi, idx) => (
-              <div key={idx} className="bg-[#151A2D] border border-[#2A3143] rounded-xl p-6 relative overflow-hidden group hover:border-[#3B82F6]/50 transition-colors">
+              <div key={idx} className="bg-[#151A2D] border border-[#2A3143] rounded-xl p-5 lg:p-6 relative overflow-hidden group hover:border-[#3B82F6]/50 transition-colors">
                 <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent to-current ${kpi.color}`}></div>
                 <div className="flex justify-between items-start mb-4">
-                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">{kpi.title}</p>
-                  <kpi.icon size={20} className={`${kpi.color} opacity-80`} />
+                  <p className="text-slate-400 text-xs lg:text-sm font-semibold uppercase tracking-wider">{kpi.title}</p>
+                  <kpi.icon size={20} className={`${kpi.color} opacity-80 hidden sm:block`} />
                 </div>
-                <h3 className="text-4xl font-black text-white">{kpi.value}</h3>
-                <div className="mt-4 flex items-center gap-2 text-sm">
+                <h3 className="text-3xl lg:text-4xl font-black text-white">{kpi.value}</h3>
+                <div className="mt-4 flex items-center gap-2 text-xs lg:text-sm">
                   <span className={`font-bold ${kpi.isPositive ? 'text-[#10B981]' : 'text-red-400'}`}>
                     {kpi.trend}
                   </span>
-                  <span className="text-slate-500">vs trimestre anterior</span>
+                  <span className="text-slate-500 hidden sm:inline">vs trimestre anterior</span>
                 </div>
               </div>
             ))}
@@ -184,15 +276,15 @@ export default function App() {
           {/* CHARTS ROW */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* AREA CHART - TENDENCIA */}
-            <div className="bg-[#151A2D] border border-[#2A3143] rounded-xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white">Tendencia de Ingresos & Participantes</h3>
-                <select className="bg-[#0B0F19] border border-[#2A3143] text-xs text-slate-300 rounded px-2 py-1 outline-none">
+            <div className="bg-[#151A2D] border border-[#2A3143] rounded-xl p-4 lg:p-6 overflow-x-auto">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 w-full min-w-[300px]">
+                <h3 className="text-base lg:text-lg font-bold text-white">Tendencia de Ingresos & Participantes</h3>
+                <select className="bg-[#0B0F19] border border-[#2A3143] text-xs text-slate-300 rounded px-2 py-1 outline-none w-full sm:w-auto">
                   <option>Últimos 6 meses</option>
                   <option>Año 2026</option>
                 </select>
               </div>
-              <div className="h-72 w-full">
+              <div className="h-64 lg:h-72 w-full min-w-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
@@ -206,11 +298,11 @@ export default function App() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#2A3143" vertical={false} />
-                    <XAxis dataKey="month" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} axisLine={false} tickLine={false} />
-                    <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="month" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                    <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#0B0F19', borderColor: '#2A3143', borderRadius: '8px' }}
-                      itemStyle={{ fontWeight: 'bold' }}
+                      itemStyle={{ fontWeight: 'bold', fontSize: '12px' }}
                     />
                     <Area type="monotone" dataKey="ingresos" name="Ingresos (k USD)" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" />
                     <Area type="monotone" dataKey="participantes" name="Participantes" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorParticipantes)" />
@@ -220,17 +312,17 @@ export default function App() {
             </div>
 
             {/* BAR CHART - REGIONAL */}
-            <div className="bg-[#151A2D] border border-[#2A3143] rounded-xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white">Desempeño Comparativo Regional</h3>
+            <div className="bg-[#151A2D] border border-[#2A3143] rounded-xl p-4 lg:p-6 overflow-x-auto">
+              <div className="flex justify-between items-center mb-6 min-w-[300px]">
+                <h3 className="text-base lg:text-lg font-bold text-white">Desempeño Comparativo Regional</h3>
                 <button className="text-slate-400 hover:text-white"><Filter size={16}/></button>
               </div>
-              <div className="h-72 w-full">
+              <div className="h-64 lg:h-72 w-full min-w-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={regionalData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={12}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#2A3143" vertical={false} />
-                    <XAxis dataKey="name" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} axisLine={false} tickLine={false} />
-                    <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="name" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                    <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
                     <Tooltip 
                       cursor={{fill: '#2A3143', opacity: 0.4}}
                       contentStyle={{ backgroundColor: '#0B0F19', borderColor: '#2A3143', borderRadius: '8px' }}
@@ -246,27 +338,40 @@ export default function App() {
 
           {/* DATAGRID - DIRECTORIO DE ARCHIVOS */}
           <div className="bg-[#151A2D] border border-[#2A3143] rounded-xl overflow-hidden shadow-2xl shadow-black/50">
-            <div className="p-6 border-b border-[#2A3143] flex justify-between items-center">
+            <div className="p-4 lg:p-6 border-b border-[#2A3143] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
               <div>
-                <h3 className="text-lg font-bold text-white">Directorio Maestro de Archivos</h3>
-                <p className="text-sm text-slate-400">Sincronización en vivo con la Unidad Compartida "Estadísticas"</p>
+                <h3 className="text-base lg:text-lg font-bold text-white">Directorio Maestro de Archivos</h3>
+                <p className="text-xs lg:text-sm text-slate-400">Sincronización en vivo con la Unidad Compartida</p>
               </div>
-              <button className="px-4 py-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
-                <ExternalLink size={16} />
-                Auditoría Completa
-              </button>
+              <div className="flex w-full sm:w-auto items-center gap-2">
+                {/* Mobile Search Input */}
+                <div className="flex-1 md:hidden flex items-center bg-[#0B0F19] border border-[#2A3143] rounded-lg px-3 py-2 focus-within:border-[#3B82F6]">
+                  <Search size={14} className="text-slate-500 mr-2" />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar..." 
+                    className="bg-transparent border-none outline-none text-xs w-full text-white"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <button className="px-3 lg:px-4 py-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs lg:text-sm font-bold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap">
+                  <ExternalLink size={14} />
+                  <span className="hidden sm:inline">Auditoría</span>
+                </button>
+              </div>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-[#0B0F19]">
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Nombre del Reporte</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Región</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Categoría</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Estado</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Última Sincronización</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143] text-right">Acción</th>
+                    <th className="px-4 lg:px-6 py-4 text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Nombre del Reporte</th>
+                    <th className="px-4 lg:px-6 py-4 text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Región</th>
+                    <th className="px-4 lg:px-6 py-4 text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Categoría</th>
+                    <th className="px-4 lg:px-6 py-4 text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Estado</th>
+                    <th className="px-4 lg:px-6 py-4 text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143]">Última Sincronización</th>
+                    <th className="px-4 lg:px-6 py-4 text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[#2A3143] text-right">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2A3143]/50">
@@ -281,21 +386,28 @@ export default function App() {
                     </tr>
                   ) : fileData.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase())).map((file) => (
                     <tr key={file.id} className="hover:bg-[#3B82F6]/5 transition-colors group">
-                      <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
-                        <FileText size={18} className="text-slate-500 group-hover:text-[#3B82F6] transition-colors" />
-                        {file.name}
+                      <td className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-white flex items-center gap-2 lg:gap-3 text-xs lg:text-sm">
+                        <FileText size={16} className="text-slate-500 group-hover:text-[#3B82F6] flex-shrink-0" />
+                        <span className="truncate max-w-[150px] sm:max-w-[200px] lg:max-w-none">{file.name}</span>
                       </td>
-                      <td className="px-6 py-4 text-slate-300 text-sm">{file.region}</td>
-                      <td className="px-6 py-4">{getCategoryBadge(file.category)}</td>
-                      <td className="px-6 py-4">{getStatusBadge(file.status)}</td>
-                      <td className="px-6 py-4 text-slate-400 text-sm">{file.date}</td>
-                      <td className="px-6 py-4 text-right">
-                        <a href={file.link} target="_blank" rel="noopener noreferrer" className="text-[#3B82F6] hover:text-white font-semibold text-sm transition-colors">
+                      <td className="px-4 lg:px-6 py-3 lg:py-4 text-slate-300 text-xs lg:text-sm">{file.region}</td>
+                      <td className="px-4 lg:px-6 py-3 lg:py-4">{getCategoryBadge(file.category)}</td>
+                      <td className="px-4 lg:px-6 py-3 lg:py-4">{getStatusBadge(file.status)}</td>
+                      <td className="px-4 lg:px-6 py-3 lg:py-4 text-slate-400 text-[10px] lg:text-xs">{file.date}</td>
+                      <td className="px-4 lg:px-6 py-3 lg:py-4 text-right">
+                        <a href={file.link} target="_blank" rel="noopener noreferrer" className="text-[#3B82F6] hover:text-white font-bold text-xs lg:text-sm transition-colors border border-[#3B82F6]/30 px-3 py-1.5 rounded bg-[#3B82F6]/10 hover:bg-[#3B82F6] hover:border-[#3B82F6]">
                           Abrir
                         </a>
                       </td>
                     </tr>
                   ))}
+                  {(!loading && fileData.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0) && (
+                     <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-slate-400 text-sm">
+                        No se encontraron archivos que coincidan con la búsqueda.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
