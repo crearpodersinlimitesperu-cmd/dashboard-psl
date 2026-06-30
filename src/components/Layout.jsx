@@ -11,7 +11,7 @@ export default function Layout({ children }) {
                 CREAR PODER SIN LÍMITES
               </div>
               <span className="text-sm text-gray-400 border-l border-gray-700 pl-3">
-                Command Center PSL
+                Dashboard de Fer
               </span>
             </div>
             
