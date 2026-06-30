@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "proyecto_ciudad": "MAESTRIA LIMA.xlsx",
+    "categoria": "Maestría Estratégica",
+    "estado": "Actualizado",
+    "ultima_actualizacion": "2026-06-29T10:30:00Z",
+    "enlace_ejecutivo": "https://docs.google.com/spreadsheets/d/mock1"
+  },
+  {
+    "id": 2,
+    "proyecto_ciudad": "MJ CDMX.xlsx",
+    "categoria": "Archivo Regional",
+    "estado": "Revisión Pendiente",
+    "ultima_actualizacion": "2026-06-28T14:15:00Z",
+    "enlace_ejecutivo": "https://docs.google.com/spreadsheets/d/mock2"
+  },
+  {
+    "id": 3,
+    "proyecto_ciudad": "CONTROL BOGOTA.xlsx",
+    "categoria": "Control Operativo",
+    "estado": "Actualizado",
+    "ultima_actualizacion": "2026-06-29T18:45:00Z",
+    "enlace_ejecutivo": "https://docs.google.com/spreadsheets/d/mock3"
+  },
+  {
+    "id": 4,
+    "proyecto_ciudad": "MAESTRIA SANTIAGO.xlsx",
+    "categoria": "Maestría Estratégica",
+    "estado": "Actualizado",
+    "ultima_actualizacion": "2026-06-27T09:00:00Z",
+    "enlace_ejecutivo": "https://docs.google.com/spreadsheets/d/mock4"
+  },
+  {
+    "id": 5,
+    "proyecto_ciudad": "AR BBUU.xlsx",
+    "categoria": "Archivo Regional",
+    "estado": "Actualizado",
+    "ultima_actualizacion": "2026-06-29T08:20:00Z",
+    "enlace_ejecutivo": "https://docs.google.com/spreadsheets/d/mock5"
+  },
+  {
+    "id": 6,
+    "proyecto_ciudad": "OPERACIONES MADRID.xlsx",
+    "categoria": "Control Operativo",
+    "estado": "Revisión Pendiente",
+    "ultima_actualizacion": "2026-06-25T11:10:00Z",
+    "enlace_ejecutivo": "https://docs.google.com/spreadsheets/d/mock6"
+  }
+]
