@@ -5,9 +5,10 @@ import {
 } from 'recharts';
 import { 
   Activity, Users, DollarSign, CheckCircle, Search, Bell, 
-  LayoutDashboard, FileText, Settings, Globe, PieChart, ExternalLink, Filter,
-  Menu, X, Plane, Shield, Building, MapPin, Briefcase
+  LayoutDashboard, FileText, Settings, PieChart, ExternalLink, Filter,
+  Menu, X, MapPin, Briefcase
 } from 'lucide-react';
+import logoCrear from './assets/logo-crear.png';
 
 // --- API URL DE APPS SCRIPT ---
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweuSj-dsQKgKURgx61P4SBU9_CMlmHm6RxlW5Wshse7TArLleik-lrnr7S1fOFes15aw/exec';
@@ -99,13 +100,8 @@ export default function App() {
       <aside className={`fixed lg:static top-0 left-0 h-full w-72 lg:w-64 bg-[#151A2D] border-r border-[#2A3143] flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="p-6 border-b border-[#2A3143] flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#10B981] flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Globe size={18} className="text-white" />
-              </div>
-              <span className="leading-none">
-                CREAR <br/><span className="text-[#10B981] text-sm">Poder Sin Límites</span>
-              </span>
+            <h1 className="flex items-center gap-3">
+              <img src={logoCrear} alt="CREAR Poder Sin Límites" className="h-10 w-auto object-contain bg-white p-1 rounded" />
             </h1>
           </div>
           <button 
@@ -171,12 +167,8 @@ export default function App() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* Mobile Title */}
-            <div className="md:hidden font-bold text-white flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-[#3B82F6] to-[#10B981] flex items-center justify-center">
-                <Globe size={12} className="text-white" />
-              </div>
-              CREAR PSL
+            <div className="md:hidden flex items-center">
+              <img src={logoCrear} alt="CREAR" className="h-8 w-auto object-contain bg-white p-1 rounded" />
             </div>
           </div>
 
@@ -206,52 +198,7 @@ export default function App() {
             <p className="text-sm lg:text-base text-slate-400 mt-1">Inteligencia Operativa y Control Regional - {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</p>
           </div>
 
-          {/* LOGÍSTICA DEL CEO (NUEVO SEGMENTO SEGÚN PERFIL) */}
-          <div className="bg-gradient-to-r from-[#151A2D] to-[#1e243b] border border-[#2A3143] rounded-xl p-5 lg:p-6 shadow-xl relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
-            
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4 lg:mb-6">
-              <Globe className="text-[#3B82F6]" size={20} />
-              Logística y Operaciones (Sede Lima)
-            </h3>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 relative z-10">
-              <div className="bg-[#0B0F19]/80 p-4 rounded-lg border border-[#2A3143]/50 flex items-start gap-4">
-                <div className="bg-[#3B82F6]/20 p-3 rounded-lg text-[#3B82F6]">
-                  <Plane size={24} />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Ruta Frecuente</p>
-                  <p className="text-white font-bold mt-1">Buenos Aires (EZE/AEP) <br/> ↳ Lima (LIM)</p>
-                  <p className="text-xs text-[#3B82F6] mt-1 font-medium">Operado por LATAM Airlines</p>
-                </div>
-              </div>
 
-              <div className="bg-[#0B0F19]/80 p-4 rounded-lg border border-[#2A3143]/50 flex items-start gap-4">
-                <div className="bg-[#10B981]/20 p-3 rounded-lg text-[#10B981]">
-                  <Building size={24} />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Centro de Operaciones</p>
-                  <p className="text-white font-bold mt-1">Hotel José Antonio Deluxe</p>
-                  <p className="text-xs text-[#10B981] mt-1 font-medium">Miraflores, Lima</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Facturación: CREACION CUANTICA E.I.R.L.</p>
-                </div>
-              </div>
-
-              <div className="bg-[#0B0F19]/80 p-4 rounded-lg border border-[#2A3143]/50 flex items-start gap-4">
-                <div className="bg-[#8B5CF6]/20 p-3 rounded-lg text-[#8B5CF6]">
-                  <Shield size={24} />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Cobertura Premium</p>
-                  <p className="text-white font-bold mt-1">AXA Partners Upgrade</p>
-                  <p className="text-xs text-[#8B5CF6] mt-1 font-medium">Límite: USD 1.000.000</p>
-                  <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">Voucher: <span className="text-white font-mono bg-slate-800 px-1 rounded">6916346</span></p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* KPI CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
