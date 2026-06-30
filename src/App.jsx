@@ -63,7 +63,7 @@ const radarData = [
   { metric: 'Asistencia Staff', value: 40 }
 ];
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiltuVHHWzBn6ukWQQL20svQ0KzaOPkRKuITkR5jRejIQppUlsGD68K-lScAvEQHziNg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ0t7HTn-bkrwtvNedjIU0rjh4-x88grEmzwkLwsby7Eyy5RM1cmUB9ily_KPvJlHqIA/exec';
 
 const getFlattenedSheets = (docs) => {
   if (!docs) return [];
@@ -478,8 +478,16 @@ export default function CrearOS() {
     ? docs.filter(d => d["ESTADO"] === 'Actualizado').length 
     : (docs.files ? Object.values(docs.files).filter(f => f.status === "SUCCESS").length : 0);
 
-  // Obtener data de la sede activa
-  const cityData = activeTab === 'Global' ? null : rawData[activeTab];
+  // Obtener data de la sede activa (de manera ultra-segura contra acentos o faltas de coincidencia)
+  const getCityData = (tab) => {
+    if (!tab || tab === 'Global') return null;
+    if (rawData[tab]) return rawData[tab];
+    // Normalizar acentos (ej. Medellín -> Medellin)
+    const norm = tab.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (rawData[norm]) return rawData[norm];
+    return { c1: [], maestria: [] };
+  };
+  const cityData = getCityData(activeTab);
 
   if (booting) {
     return (
