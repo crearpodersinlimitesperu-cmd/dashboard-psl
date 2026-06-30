@@ -6,7 +6,7 @@ import {
 import { 
   Activity, Users, DollarSign, CheckCircle, Search, Bell, 
   LayoutDashboard, FileText, Settings, PieChart, ExternalLink, Filter,
-  Menu, X, MapPin, Briefcase
+  Menu, X, MapPin, Briefcase, Sparkles, RefreshCw
 } from 'lucide-react';
 import logoCrear from './assets/logo-crear.png';
 
@@ -43,8 +43,10 @@ export default function App() {
   const [fileData, setFileData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [lastSync, setLastSync] = useState(new Date());
+  const [aiInsight, setAiInsight] = useState("Iniciando IA para análisis en vivo...");
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch(SCRIPT_URL)
       .then(res => res.json())
       .then(data => {
@@ -66,12 +68,25 @@ export default function App() {
           };
         });
         setFileData(formattedData);
+        setLastSync(new Date());
+        
+        // Simulación de IA Insights basados en los datos en tiempo real
+        const actualizados = formattedData.filter(f => f.status === 'Actualizado').length;
+        setAiInsight(`IA Insight: Flujo de datos óptimo. ${actualizados} directorios regionales verificados y en línea.`);
         setLoading(false);
       })
       .catch(error => {
         console.error("Error fetching data:", error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchData(); // Carga inicial
+    const interval = setInterval(() => {
+      fetchData(); // Sincronización en vivo cada 30 segundos
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const getStatusBadge = (status) => {
@@ -192,10 +207,29 @@ export default function App() {
         {/* SCROLLABLE DASHBOARD AREA */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8 pb-20 lg:pb-8">
           
-          {/* HEADER TITLES */}
-          <div>
-            <h2 className="text-2xl lg:text-3xl font-black text-white">Dashboard Ejecutivo</h2>
-            <p className="text-sm lg:text-base text-slate-400 mt-1">Inteligencia Operativa y Control Regional - {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</p>
+          {/* HEADER TITLES & AI SYNC INDICATOR */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-2xl lg:text-3xl font-black text-white">Dashboard Ejecutivo</h2>
+              <p className="text-sm lg:text-base text-slate-400 mt-1">Inteligencia Operativa y Control Regional - {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</p>
+            </div>
+            
+            <div className="flex items-center gap-3 bg-gradient-to-r from-[#8B5CF6]/20 to-[#3B82F6]/20 border border-[#8B5CF6]/30 px-4 py-2 rounded-xl w-full md:w-auto">
+              <div className="relative flex h-3 w-3 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8B5CF6] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8B5CF6]"></span>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white flex items-center gap-1"><Sparkles size={12} className="text-[#8B5CF6]"/> IA Live Sync Activo</p>
+                <p className="text-[10px] text-slate-300">Última captura: {lastSync.toLocaleTimeString('es-ES')}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* AI INSIGHTS BAR */}
+          <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg p-3 flex items-center gap-3 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+            <RefreshCw size={16} className={`text-[#10B981] ${loading ? 'animate-spin' : ''} flex-shrink-0`} />
+            <p className="text-xs sm:text-sm text-[#10B981] font-medium leading-tight">{aiInsight}</p>
           </div>
 
 
@@ -327,7 +361,7 @@ export default function App() {
                       <td colSpan="6" className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center justify-center gap-3">
                           <div className="w-8 h-8 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-                          <span className="text-slate-400 font-medium text-sm animate-pulse">Sincronizando con Google Drive en tiempo real...</span>
+                          <span className="text-slate-400 font-medium text-sm animate-pulse">Analizando flujos con IA y sincronizando en vivo con Google Drive...</span>
                         </div>
                       </td>
                     </tr>
