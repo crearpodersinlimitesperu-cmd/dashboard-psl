@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   AlertCircle, CheckCircle2, AlertTriangle, TrendingUp, DollarSign, Users, 
-  MapPin, Trophy, Calendar, Database, X, ChevronRight, Brain, Target, Activity, Zap, FileText, ArrowRight
+  MapPin, Trophy, Calendar, Database, X, ChevronRight, Brain, Target, Activity, Zap, FileText, ArrowRight, Filter
 } from 'lucide-react';
 import logoCrear from './assets/logo-crear.png';
 
