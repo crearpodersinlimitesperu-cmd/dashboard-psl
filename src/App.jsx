@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Legend
 } from 'recharts';
-import { 
-  AlertTriangle, ShieldAlert, CheckCircle2, MapPin, 
+import {
+  AlertTriangle, ShieldAlert, CheckCircle2, MapPin,
   Search, X, FileText, ChevronRight, Activity, Terminal, BrainCircuit,
   Zap, Database, Globe, MessageSquare, Send, ArrowLeft, RefreshCw, Key, ShieldCheck, HelpCircle, TrendingUp, Calendar, ArrowUpRight, Eye, EyeOff
 } from 'lucide-react';
 import logoCrear from './assets/logo-crear.png';
+import { CalendarPage } from './components/CalendarAgent';
 
 // ============================================================================
 // 1. EXTRACCIÓN QUIRÚRGICA DE DATOS (BASADO ESTRICTAMENTE EN LOS CSV PROVISTOS)
@@ -427,7 +429,7 @@ Responde de manera ejecutiva en español a la pregunta de Fernando Aragón. Usa 
 // 4. MAIN APP COMPONENT
 // ============================================================================
 
-export default function CrearOS() {
+function CrearOS() {
   const [activeTab, setActiveTab] = useState('Global');
   const [booting, setBooting] = useState(true);
   const [aiOpen, setAiOpen] = useState(false);
@@ -1228,5 +1230,16 @@ export default function CrearOS() {
         .scrollbar-none::-webkit-scrollbar { display: none; }
       `}} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<CrearOS />} />
+        <Route path="/calendar" element={<CalendarPage />} />
+      </Routes>
+    </Router>
   );
 }
