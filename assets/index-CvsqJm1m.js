@@ -104,4 +104,4 @@ Fernando, tu atención prioritaria hoy debe enfocarse en Quito. Las 12 desercion
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1A1A1A; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2A2A2A; }
         .scrollbar-none::-webkit-scrollbar { display: none; }
-      `}})]})}function IH(){return(0,$.jsx)(Mn,{children:(0,$.jsxs)(Wt,{children:[(0,$.jsx)(Ht,{path:`/`,element:(0,$.jsx)(FH,{})}),(0,$.jsx)(Ht,{path:`/calendar`,element:(0,$.jsx)(SH,{})})]})})}(0,y.createRoot)(document.getElementById(`root`)).render((0,$.jsx)(v.StrictMode,{children:(0,$.jsx)(IH,{})}));
+      `}})]})}function IH(){return(0,$.jsx)(Mn,{basename:`/dashboard-psl`,children:(0,$.jsxs)(Wt,{children:[(0,$.jsx)(Ht,{path:`/`,element:(0,$.jsx)(FH,{})}),(0,$.jsx)(Ht,{path:`/calendar`,element:(0,$.jsx)(SH,{})})]})})}(0,y.createRoot)(document.getElementById(`root`)).render((0,$.jsx)(v.StrictMode,{children:(0,$.jsx)(IH,{})}));
