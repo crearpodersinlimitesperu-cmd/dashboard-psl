@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Trash2, RefreshCw } from 'lucide-react';
+import { FileText, Trash2, RefreshCw, Sheet, File } from 'lucide-react';
 import CalendarAgentPanel from './CalendarAgentPanel';
 
 export default function CalendarPage() {
@@ -82,7 +82,11 @@ export default function CalendarPage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-blue-500">✓</span>
-                  <span>Descarga directa en Excel</span>
+                  <span>Exportación en Excel y PDF</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-blue-500">✓</span>
+                  <span>Logo CREAR en PDF</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-blue-500">✓</span>
@@ -130,6 +134,7 @@ export default function CalendarPage() {
                   <thead className="bg-gray-100 border-b">
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Creado</th>
                       <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Acciones</th>
                     </tr>
@@ -142,11 +147,24 @@ export default function CalendarPage() {
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <FileText size={20} className="text-blue-500" />
+                            {calendar.type === 'pdf' ? (
+                              <File size={20} className="text-red-500" />
+                            ) : (
+                              <Sheet size={20} className="text-green-500" />
+                            )}
                             <span className="font-medium text-gray-800 truncate">
                               {calendar.name}
                             </span>
                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            calendar.type === 'pdf'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {calendar.type === 'pdf' ? 'PDF' : 'Excel'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {formatDate(calendar.created)}

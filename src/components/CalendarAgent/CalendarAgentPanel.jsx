@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Loader, AlertCircle } from 'lucide-react';
+import { Download, Loader, AlertCircle, FileText, Sheet } from 'lucide-react';
 
 export default function CalendarAgentPanel() {
   const [sedes, setSedes] = useState([]);
@@ -11,6 +11,7 @@ export default function CalendarAgentPanel() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [generatedFile, setGeneratedFile] = useState(null);
+  const [fileFormat, setFileFormat] = useState('excel');
 
   useEffect(() => {
     loadCalendarMetadata();
@@ -43,7 +44,8 @@ export default function CalendarAgentPanel() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/calendar/generate', {
+      const endpoint = fileFormat === 'pdf' ? '/api/calendar/generate-pdf' : '/api/calendar/generate';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -58,7 +60,8 @@ export default function CalendarAgentPanel() {
 
       if (response.ok) {
         setGeneratedFile(data.fileName);
-        setMessage(`✓ Calendario generado: ${data.fileName}`);
+        const formatText = fileFormat === 'pdf' ? 'PDF' : 'Excel';
+        setMessage(`✓ Calendario ${formatText} generado: ${data.fileName}`);
       } else {
         setMessage('Error: ' + (data.error || 'No se pudo generar el calendario'));
       }
@@ -71,7 +74,8 @@ export default function CalendarAgentPanel() {
 
   const downloadCalendar = () => {
     if (generatedFile) {
-      window.open(`/calendars/${generatedFile}.xlsx`, '_blank');
+      const extension = fileFormat === 'pdf' ? '.pdf' : '.xlsx';
+      window.open(`/calendars/${generatedFile}${extension}`, '_blank');
     }
   };
 
@@ -165,6 +169,37 @@ export default function CalendarAgentPanel() {
           </div>
         </div>
 
+        {/* Selector de Formato */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            📄 Formato de Exportación
+          </label>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setFileFormat('excel')}
+              className={`flex-1 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+                fileFormat === 'excel'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <Sheet size={18} />
+              Excel
+            </button>
+            <button
+              onClick={() => setFileFormat('pdf')}
+              className={`flex-1 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+                fileFormat === 'pdf'
+                  ? 'bg-red-500 text-white shadow-md'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <FileText size={18} />
+              PDF
+            </button>
+          </div>
+        </div>
+
         {/* Botones de Acción */}
         <div className="flex gap-4 pt-4">
           <button
@@ -220,8 +255,9 @@ export default function CalendarAgentPanel() {
             <li>1. Selecciona la Sede (LIMA)</li>
             <li>2. Elige el Equipo de la lista</li>
             <li>3. Escoge el Mes y Año deseado</li>
-            <li>4. Haz clic en "Generar Calendario"</li>
-            <li>5. Descarga el archivo Excel</li>
+            <li>4. Elige el formato (Excel o PDF con logo CREAR)</li>
+            <li>5. Haz clic en "Generar Calendario"</li>
+            <li>6. Descarga el archivo generado</li>
           </ul>
         </div>
       </div>

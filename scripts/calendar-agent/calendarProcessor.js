@@ -1,6 +1,8 @@
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
+const PDFDocument = require('pdfkit');
+const { promisify } = require('util');
 
 class CalendarProcessor {
   constructor(sourceFile) {
@@ -47,12 +49,26 @@ class CalendarProcessor {
       }
     });
 
-    // Si no se encontraron equipos, crear lista por defecto
-    if (this.equipos.length === 0) {
-      for (let i = 10; i <= 30; i++) {
-        this.equipos.push(`EQUIPO ${i}`);
-      }
+    // Asegurar que EQUIPO 30 esté en la lista
+    if (!this.equipos.includes('EQUIPO 30')) {
+      this.equipos.push('EQUIPO 30');
     }
+
+    // Si no se encontraron equipos, crear lista completa (5 a 30)
+    if (this.equipos.length <= 1) {
+      const equipoNums = [5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+      this.equipos = [];
+      equipoNums.forEach(num => {
+        this.equipos.push(`EQUIPO ${num}`);
+      });
+    }
+
+    // Ordenar equipos numéricamente
+    this.equipos.sort((a, b) => {
+      const numA = parseInt(a.split(' ')[1]);
+      const numB = parseInt(b.split(' ')[1]);
+      return numA - numB;
+    });
 
     // Si no se encontraron sedes, usar LIMA
     if (this.sedes.length === 0) {
@@ -210,20 +226,40 @@ class CalendarProcessor {
   parseFecha(fechaStr) {
     if (!fechaStr) return null;
 
+    // Si es una fecha de Excel
+    if (fechaStr instanceof Date) {
+      return {
+        month: fechaStr.getMonth() + 1,
+        year: fechaStr.getFullYear()
+      };
+    }
+
     // Convertir a string si es date o número
     const dateString = fechaStr.toString ? fechaStr.toString().toUpperCase() : '';
 
+    // Si es una fórmula, ignorar
+    if (dateString.includes('=') || dateString.includes('+')) {
+      return null;
+    }
+
     const meses = {
-      'ENERO': 1, 'FEBRUARY': 2, 'FEBRUARY': 2, 'FEBRERO': 2,
-      'MARZO': 3, 'APRIL': 4, 'ABRIL': 4, 'MAYO': 5, 'MAY': 5,
-      'JUNIO': 6, 'JUNE': 6, 'JULIO': 7, 'JULY': 7,
-      'AGOSTO': 8, 'AUGUST': 8, 'SEPTIEMBRE': 9, 'SEPTEMBER': 9,
-      'OCTUBRE': 10, 'OCTOBER': 10, 'NOVIEMBRE': 11, 'NOVEMBER': 11,
-      'DICIEMBRE': 12, 'DECEMBER': 12
+      'ENERO': 1, 'JANUARY': 1, 'JAN': 1,
+      'FEBRERO': 2, 'FEBRUARY': 2, 'FEB': 2,
+      'MARZO': 3, 'MARCH': 3, 'MAR': 3,
+      'ABRIL': 4, 'APRIL': 4, 'APR': 4,
+      'MAYO': 5, 'MAY': 5,
+      'JUNIO': 6, 'JUNE': 6, 'JUN': 6,
+      'JULIO': 7, 'JULY': 7, 'JUL': 7,
+      'AGOSTO': 8, 'AUGUST': 8, 'AUG': 8,
+      'SEPTIEMBRE': 9, 'SEPTEMBER': 9, 'SEP': 9,
+      'OCTUBRE': 10, 'OCTOBER': 10, 'OCT': 10,
+      'NOVIEMBRE': 11, 'NOVEMBER': 11, 'NOV': 11,
+      'DICIEMBRE': 12, 'DECEMBER': 12, 'DEC': 12
     };
 
     let month = null, year = null;
 
+    // Buscar nombre de mes
     for (const [mesNombre, mesNum] of Object.entries(meses)) {
       if (dateString.includes(mesNombre)) {
         month = mesNum;
@@ -231,6 +267,7 @@ class CalendarProcessor {
       }
     }
 
+    // Buscar año en formato 20XX
     const yearMatch = dateString.match(/20\d{2}/);
     if (yearMatch) {
       year = parseInt(yearMatch[0]);
@@ -274,6 +311,116 @@ class CalendarProcessor {
       await simpleWb.xlsx.writeFile(filePath);
     }
     return filePath;
+  }
+
+  async generatePDF(sede, equipo, month, year) {
+    try {
+      const doc = new PDFDocument({ margin: 40 });
+      const fileName = `${sede}_${equipo.replace(/\s+/g, '_')}_${this.getMonthName(month)}_${year}`;
+      const outputDir = path.join(__dirname, '../../public/calendars');
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      const filePath = path.join(outputDir, `${fileName}.pdf`);
+
+      // Agregar logo si existe
+      const logoPath = path.join(__dirname, '../../public/uploads/logo-crear.pdf');
+      if (fs.existsSync(logoPath)) {
+        try {
+          doc.image(logoPath, 50, 20, { width: 100, height: 30 });
+        } catch (logoError) {
+          console.warn('No se pudo agregar el logo:', logoError.message);
+        }
+      }
+
+      // Encabezado
+      doc.fontSize(24).font('Helvetica-Bold').text(`CALENDARIO ${equipo}`, 150, 40);
+      doc.fontSize(12).font('Helvetica').text(`Sede: ${sede} | Mes: ${this.getMonthName(month)} ${year}`, 150, 70);
+      doc.moveTo(40, 110).lineTo(550, 110).stroke();
+
+      // Tabla de datos
+      const data = this.calendarData[equipo] || [];
+      const tableTop = 140;
+      const colWidths = [100, 80, 60, 80, 70, 60, 80];
+      const headers = ['ACTIVIDAD', 'FECHA', 'HORA', 'UBICACIÓN', 'RESPONSABLE', 'ESTADO', 'NOTAS'];
+      const rows = [];
+
+      // Agregar datos filtrados por mes
+      if (data.length > 0) {
+        data.forEach(item => {
+          if (item && item.actividad) {
+            const actividad = String(item.actividad).substring(0, 50);
+            const fecha = this.parseFecha(item.fecha);
+
+            if (!fecha || !fecha.year || (fecha.month === month && fecha.year === year)) {
+              rows.push([
+                actividad,
+                this.formatFecha(item.fecha),
+                this.formatHora(item.hora),
+                sede,
+                '',
+                'PENDIENTE',
+                ''
+              ]);
+            }
+          }
+        });
+      }
+
+      // Si no hay datos, agregar filas vacías
+      if (rows.length === 0) {
+        for (let i = 0; i < 5; i++) {
+          rows.push(['', '', '', sede, '', 'PENDIENTE', '']);
+        }
+      }
+
+      // Dibujar tabla
+      doc.fontSize(10).font('Helvetica-Bold');
+      let yPosition = tableTop;
+
+      // Headers
+      doc.fillColor('#4472C4').rect(40, yPosition, 510, 25).fill();
+      doc.fillColor('#FFFFFF');
+      headers.forEach((header, i) => {
+        const x = 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+        doc.text(header, x + 5, yPosition + 5, { width: colWidths[i] - 10, height: 20 });
+      });
+
+      yPosition += 25;
+      doc.fillColor('#000000').font('Helvetica');
+
+      // Rows
+      rows.forEach((row, rowIdx) => {
+        if (yPosition > 700) {
+          doc.addPage();
+          yPosition = 40;
+        }
+
+        const rowHeight = 30;
+        doc.rect(40, yPosition, 510, rowHeight).stroke();
+
+        row.forEach((cell, colIdx) => {
+          const x = 40 + colWidths.slice(0, colIdx).reduce((a, b) => a + b, 0);
+          doc.fontSize(9).text(String(cell), x + 5, yPosition + 5, { width: colWidths[colIdx] - 10, height: rowHeight - 10 });
+        });
+
+        yPosition += rowHeight;
+      });
+
+      // Footer
+      doc.fontSize(8).fillColor('#666666');
+      doc.text(`Generado por Sistema de Calendarios | ${new Date().toLocaleString('es-ES')}`, 40, 750, { align: 'center' });
+
+      return new Promise((resolve, reject) => {
+        doc.pipe(fs.createWriteStream(filePath));
+        doc.on('end', () => resolve(filePath));
+        doc.on('error', reject);
+        doc.end();
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw error;
+    }
   }
 }
 

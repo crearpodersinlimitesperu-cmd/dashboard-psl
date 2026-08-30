@@ -94,18 +94,52 @@ router.get('/list', (req, res) => {
     }
 
     const files = fs.readdirSync(calendarDir)
-      .filter(f => f.endsWith('.xlsx'))
-      .map(f => ({
-        name: f.replace('.xlsx', ''),
-        file: f,
-        created: fs.statSync(path.join(calendarDir, f)).birthtime
-      }))
+      .filter(f => f.endsWith('.xlsx') || f.endsWith('.pdf'))
+      .map(f => {
+        const baseName = f.replace(/\.(xlsx|pdf)$/, '');
+        return {
+          name: baseName,
+          file: f,
+          type: f.endsWith('.pdf') ? 'pdf' : 'excel',
+          created: fs.statSync(path.join(calendarDir, f)).birthtime
+        };
+      })
       .sort((a, b) => b.created - a.created);
 
     res.json({ calendars: files });
   } catch (error) {
     res.status(500).json({
       error: error.message
+    });
+  }
+});
+
+// Ruta: Generar PDF
+router.post('/generate-pdf', async (req, res) => {
+  try {
+    const { sede, equipo, month, year } = req.body;
+
+    if (!sede || !equipo || !month || !year) {
+      return res.status(400).json({
+        error: 'Faltan parámetros: sede, equipo, month, year'
+      });
+    }
+
+    const uploadsDir = path.join(__dirname, '../../public/uploads');
+    const calendarFile = findCalendarFile(uploadsDir);
+
+    const processor = await initializeProcessor(calendarFile);
+    const filePath = await processor.generatePDF(sede, equipo, month, year);
+
+    res.json({
+      success: true,
+      fileName: path.basename(filePath, '.pdf'),
+      message: `PDF generado: ${path.basename(filePath)}`
+    });
+  } catch (error) {
+    console.error('Error en /generate-pdf:', error);
+    res.status(500).json({
+      error: error.message || 'Error al generar el PDF'
     });
   }
 });
@@ -126,22 +160,46 @@ router.get('/download/:fileName', (req, res) => {
   }
 });
 
+// Ruta: Descargar PDF
+router.get('/download-pdf/:fileName', (req, res) => {
+  try {
+    const { fileName } = req.params;
+    const filePath = path.join(__dirname, '../../public/calendars', `${fileName}.pdf`);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Archivo PDF no encontrado' });
+    }
+
+    res.download(filePath);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Función auxiliar para encontrar el archivo de calendario
 function findCalendarFile(dir) {
   if (!fs.existsSync(dir)) return null;
 
   const files = fs.readdirSync(dir);
 
-  // Preferir archivos que contengan "Calendario" sobre "PROGRAMACION"
+  // Preferir archivo de Calendario Maestría
   let excelFile = files.find(f =>
-    f.endsWith('.xlsx') && f.includes('Calendario')
+    f.endsWith('.xlsx') &&
+    (f.includes('Calendario') || f.includes('calendario')) &&
+    (f.includes('Maestr') || f.includes('MAESTR'))
   );
 
-  // Si no hay archivo de calendario, buscar cualquier .xlsx
+  // Si no hay, buscar cualquier Calendario
   if (!excelFile) {
     excelFile = files.find(f =>
-      f.endsWith('.xlsx') &&
-      (f.includes('Calendario') || f.includes('PROGRAMACION') || f.includes('calendario'))
+      f.endsWith('.xlsx') && (f.includes('Calendario') || f.includes('calendario'))
+    );
+  }
+
+  // Si no hay, buscar PROGRAMACION
+  if (!excelFile) {
+    excelFile = files.find(f =>
+      f.endsWith('.xlsx') && (f.includes('PROGRAMACION') || f.includes('programacion'))
     );
   }
 

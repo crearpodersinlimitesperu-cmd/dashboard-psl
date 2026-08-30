@@ -18,10 +18,11 @@
   "author": "Dashboard PSL Team",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
+    "cors": "^2.8.5",
     "exceljs": "^4.3.0",
+    "express": "^4.18.2",
     "multer": "^1.4.5-lts.1",
-    "cors": "^2.8.5"
+    "pdfkit": "^0.20.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
