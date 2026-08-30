@@ -1235,7 +1235,7 @@ function CrearOS() {
 
 export default function App() {
   return (
-    <Router>
+    <Router basename="/dashboard-psl">
       <Routes>
         <Route path="/" element={<CrearOS />} />
         <Route path="/calendar" element={<CalendarPage />} />
