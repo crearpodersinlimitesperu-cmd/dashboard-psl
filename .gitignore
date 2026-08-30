@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Generated calendar files
+public/calendars/*.pdf
+public/calendars/*.xlsx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
