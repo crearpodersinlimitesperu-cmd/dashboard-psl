@@ -131,10 +131,24 @@ function findCalendarFile(dir) {
   if (!fs.existsSync(dir)) return null;
 
   const files = fs.readdirSync(dir);
-  const excelFile = files.find(f =>
-    f.endsWith('.xlsx') &&
-    (f.includes('Calendario') || f.includes('PROGRAMACION'))
+
+  // Preferir archivos que contengan "Calendario" sobre "PROGRAMACION"
+  let excelFile = files.find(f =>
+    f.endsWith('.xlsx') && f.includes('Calendario')
   );
+
+  // Si no hay archivo de calendario, buscar cualquier .xlsx
+  if (!excelFile) {
+    excelFile = files.find(f =>
+      f.endsWith('.xlsx') &&
+      (f.includes('Calendario') || f.includes('PROGRAMACION') || f.includes('calendario'))
+    );
+  }
+
+  // Si sigue sin encontrar, tomar el primer .xlsx
+  if (!excelFile) {
+    excelFile = files.find(f => f.endsWith('.xlsx'));
+  }
 
   return excelFile ? path.join(dir, excelFile) : null;
 }
