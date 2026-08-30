@@ -10,12 +10,18 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "start": "node server.js",
+    "prod": "npm run build && npm start"
   },
   "dependencies": {
+    "exceljs": "^4.3.0",
+    "express": "^4.18.2",
     "lucide-react": "^1.22.0",
+    "pdfkit": "^0.20.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.3",
     "recharts": "^3.9.0"
   },
   "devDependencies": {
