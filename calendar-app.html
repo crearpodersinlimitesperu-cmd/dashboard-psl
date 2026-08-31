@@ -376,7 +376,15 @@
 
     async function loadMasterCalendar() {
       try {
-        const response = await fetch('/dashboard-psl/uploads/calendario-maestro.xlsx');
+        // Detectar la ruta correcta según el ambiente
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        const filePath = isGitHubPages
+          ? '/dashboard-psl/uploads/calendario-maestro.xlsx'
+          : '/uploads/calendario-maestro.xlsx';
+
+        const response = await fetch(filePath);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { cellFormulas: true, cellStyles: false });
 
