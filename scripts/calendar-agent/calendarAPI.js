@@ -1,10 +1,12 @@
 const express = require('express');
 const CalendarProcessor = require('./calendarProcessor');
+const PDFGenerator = require('./pdfGenerator');
 const path = require('path');
 const fs = require('fs');
 
 const router = express.Router();
 const processor = new CalendarProcessor();
+const pdfGen = new PDFGenerator();
 
 // Obtener lista de equipos disponibles
 router.get('/equipos', async (req, res) => {
@@ -66,7 +68,7 @@ router.post('/generate', async (req, res) => {
   }
 });
 
-// Generar PDF
+// Generar PDF profesional
 router.post('/generate-pdf', async (req, res) => {
   try {
     const { sede, equipo, month, year } = req.body;
@@ -80,7 +82,11 @@ router.post('/generate-pdf', async (req, res) => {
     // Extraer número del equipo
     const equipoNum = parseInt(equipo.split(' ')[1]);
 
-    const fileName = await processor.generatePDF(equipoNum, month, year, sede);
+    // Obtener eventos
+    const eventos = await processor.extractEventsForTeam(equipoNum, month, year);
+
+    // Generar PDF profesional
+    const fileName = await pdfGen.generatePDF(eventos, equipoNum, month, year, sede);
 
     res.json({
       success: true,
