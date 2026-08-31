@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Agente de Calendarios - CREAR</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1f35 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #60a5fa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .panel {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #e2e8f0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-generate {
+      background: linear-gradient(135deg, #3b82f6, #1e40af);
+      color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-generate:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .format-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .format-btn {
+      padding: 10px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .format-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.success {
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: #34d399;
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+
+    .info-box {
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .info-box h3 {
+      color: #22d3ee;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-box li {
+      padding: 6px 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .info-box li:before {
+      content: "✓ ";
+      color: #34d399;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .loading {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .events-preview {
+      background: rgba(20, 30, 48, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+
+    .event-item {
+      padding: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      margin-bottom: 8px;
+    }
+
+    .event-item:last-child {
+      border-bottom: none;
+    }
+
+    .event-date {
+      color: #60a5fa;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    .event-text {
+      color: #cbd5e1;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📅 Agente de Automatización de Calendarios</h1>
+      <p style="color: #94a3b8; font-size: 13px;">Genera calendarios profesionales con datos reales de tu maestría</p>
+    </header>
+
+    <div class="panel">
+      <h2>🎯 Generador de Calendarios</h2>
+
+      <div class="info-box">
+        <h3>ℹ️ Información</h3>
+        <p>Selecciona el equipo, mes y año. El sistema extraerá automáticamente los eventos de tu archivo maestro y generará un calendario profesional en Excel o PDF.</p>
+      </div>
+
+      <form id="calendarForm">
+        <div class="form-group">
+          <label for="sede">🏢 Selecciona Sede</label>
+          <select id="sede" required>
+            <option value="">-- Seleccionar Sede --</option>
+            <option value="LIMA">LIMA</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="equipo">⚽ Selecciona Equipo</label>
+          <select id="equipo" required>
+            <option value="">-- Cargando equipos... --</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mes">📆 Mes</label>
+            <select id="mes" required>
+              <option value="1">Enero</option>
+              <option value="2">Febrero</option>
+              <option value="3">Marzo</option>
+              <option value="4">Abril</option>
+              <option value="5">Mayo</option>
+              <option value="6">Junio</option>
+              <option value="7">Julio</option>
+              <option value="8" selected>Agosto</option>
+              <option value="9">Septiembre</option>
+              <option value="10">Octubre</option>
+              <option value="11">Noviembre</option>
+              <option value="12">Diciembre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ano">📅 Año</label>
+            <select id="ano" required>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>📄 Formato de Exportación</label>
+          <div class="format-selector">
+            <button type="button" class="format-btn active" data-format="excel" onclick="setFormat('excel')">
+              📊 Excel
+            </button>
+            <button type="button" class="format-btn" data-format="pdf" onclick="setFormat('pdf')">
+              📄 PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn-generate" onclick="generateCalendar()">
+            ✨ Generar
+          </button>
+          <a href="https://github.com/crearpodersinlimitesperu-cmd/dashboard-psl" target="_blank" style="display: flex; align-items: center; justify-content: center; padding: 14px; border-radius: 8px; background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); color: #60a5fa; text-decoration: none;">
+            🔗 GitHub
+          </a>
+        </div>
+
+        <div id="message" class="message"></div>
+        <div id="eventsPreview" class="events-preview" style="display: none;"></div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>💡 Características</h2>
+      <div class="info-box">
+        <h3>Capacidades</h3>
+        <ul>
+          <li>Lee datos reales de tu archivo maestro</li>
+          <li>Extrae eventos por equipo y mes</li>
+          <li>Exporta a Excel y PDF profesional</li>
+          <li>Funciona 100% en tu navegador</li>
+          <li>Completamente GRATIS - Sin servidores</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedFormat = 'excel';
+    let masterData = null;
+
+    const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    // Cargar archivo maestro al iniciar
+    window.addEventListener('load', loadMasterCalendar);
+
+    async function loadMasterCalendar() {
+      try {
+        const response = await fetch('/dashboard-psl/uploads/calendario-maestro.xlsx');
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { cellFormulas: true, cellStyles: false });
+
+        masterData = workbook;
+
+        // Extraer equipos disponibles
+        const equipos = [];
+        workbook.SheetNames.forEach(name => {
+          const match = name.match(/E(\d+)/);
+          if (match) {
+            equipos.push({
+              num: parseInt(match[1]),
+              nombre: `EQUIPO ${match[1]}`,
+              sheet: name
+            });
+          }
+        });
+
+        equipos.sort((a, b) => a.num - b.num);
+
+        // Llenar dropdown
+        const equipoSelect = document.getElementById('equipo');
+        equipoSelect.innerHTML = '<option value="">-- Seleccionar Equipo --</option>' +
+          equipos.map(e => `<option value="${e.nombre}">${e.nombre}</option>`).join('');
+
+        showMessage('✓ Datos cargados correctamente', 'success');
+      } catch (error) {
+        console.error('Error cargando archivo maestro:', error);
+        showMessage('❌ Error: No se pudo cargar el archivo maestro', 'error');
+      }
+    }
+
+    function setFormat(format) {
+      selectedFormat = format;
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-format="${format}"]`).classList.add('active');
+    }
+
+    async function generateCalendar() {
+      const sede = document.getElementById('sede').value;
+      const equipo = document.getElementById('equipo').value;
+      const mes = document.getElementById('mes').value;
+      const ano = document.getElementById('ano').value;
+
+      if (!sede || !equipo) {
+        showMessage('Por favor selecciona Sede y Equipo', 'error');
+        return;
+      }
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading">⏳</span> Generando...';
+
+      try {
+        // Extraer número del equipo
+        const equipoNum = equipo.split(' ')[1];
+        const sheetName = `E${equipoNum}`;
+
+        // Obtener la hoja
+        const sheet = masterData.Sheets[sheetName];
+        if (!sheet) {
+          throw new Error(`Hoja ${sheetName} no encontrada`);
+        }
+
+        // Extraer eventos
+        const eventos = extractEvents(sheet, mes, ano);
+
+        // Mostrar preview
+        showEventsPreview(eventos);
+
+        if (selectedFormat === 'excel') {
+          generateExcel(eventos, equipoNum, mes, ano, sede);
+        } else {
+          generatePDF(eventos, equipoNum, mes, ano, sede);
+        }
+
+        showMessage(`✓ Calendario generado con ${eventos.length} eventos`, 'success');
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage(`❌ Error: ${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '✨ Generar';
+      }
+    }
+
+    function extractEvents(sheet, mes, ano) {
+      const eventos = [];
+      const mesNum = parseInt(mes);
+      const anoNum = parseInt(ano);
+      const range = XLSX.utils.decode_range(sheet['!ref']);
+
+      // Iterar sobre las filas
+      for (let row = 2; row <= range.e.r; row++) {
+        const actividad = sheet[XLSX.utils.encode_cell({ r: row - 1, c: 0 })];
+        const fechaCell = sheet[XLSX.utils.encode_cell({ r: row - 1, c: 29 })]; // Columna AD (30)
+        const horaCell = sheet[XLSX.utils.encode_cell({ r: row - 1, c: 2 })];
+
+        if (!actividad || !actividad.v) continue;
+
+        const fecha = fechaCell ? fechaCell.v : null;
+        let fechaObj = null;
+
+        if (typeof fecha === 'string' && fecha.match(/^\d{4}-\d{2}-\d{2}/)) {
+          fechaObj = new Date(fecha);
+        } else if (typeof fecha === 'number') {
+          // Excel date
+          fechaObj = new Date((fecha - 25569) * 86400 * 1000);
+        }
+
+        if (fechaObj && fechaObj.getMonth() + 1 === mesNum && fechaObj.getFullYear() === anoNum) {
+          eventos.push({
+            dia: fechaObj.getDate(),
+            actividad: actividad.v.toString().substring(0, 100),
+            hora: horaCell ? horaCell.v.toString() : '',
+            fecha: fechaObj
+          });
+        }
+      }
+
+      return eventos.sort((a, b) => a.dia - b.dia);
+    }
+
+    function showEventsPreview(eventos) {
+      const preview = document.getElementById('eventsPreview');
+      if (eventos.length === 0) {
+        preview.style.display = 'none';
+        return;
+      }
+
+      preview.style.display = 'block';
+      preview.innerHTML = `<strong>📋 Eventos encontrados (${eventos.length}):</strong><br>` +
+        eventos.map(e => `
+          <div class="event-item">
+            <div class="event-date">Día ${e.dia}</div>
+            <div class="event-text">${e.actividad}</div>
+            <div class="event-text" style="font-size: 11px; color: #94a3b8;">${e.hora}</div>
+          </div>
+        `).join('');
+    }
+
+    function generateExcel(eventos, equipoNum, mes, ano, sede) {
+      const wb = XLSX.utils.book_new();
+      const wsData = [
+        ['DÍA', 'ACTIVIDAD', 'HORA'],
+        ...eventos.map(e => [e.dia, e.actividad, e.hora])
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols'] = [{ wch: 8 }, { wch: 50 }, { wch: 25 }];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Calendario');
+      XLSX.writeFile(wb, `Calendario_E${equipoNum}_${meses[parseInt(mes)]}_${ano}.xlsx`);
+    }
+
+    function generatePDF(eventos, equipoNum, mes, ano, sede) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'letter');
+
+      doc.setFontSize(18);
+      doc.text('CALENDARIO DEL EQUIPO', 105, 20, { align: 'center' });
+
+      doc.setFontSize(11);
+      doc.text(`${sede} | EQUIPO ${equipoNum}`, 105, 30, { align: 'center' });
+      doc.text(`${meses[parseInt(mes)]} ${ano}`, 105, 38, { align: 'center' });
+
+      doc.setDrawColor(100);
+      doc.line(20, 42, 190, 42);
+
+      let yPos = 50;
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text('DÍA', 25, yPos);
+      doc.text('ACTIVIDAD', 40, yPos);
+      doc.text('HORA', 160, yPos);
+
+      yPos += 6;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+
+      eventos.forEach(evento => {
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.text(evento.dia.toString(), 25, yPos);
+        const lines = doc.splitTextToSize(evento.actividad, 110);
+        doc.text(lines, 40, yPos);
+        doc.text(evento.hora.substring(0, 30), 160, yPos);
+
+        yPos += Math.max(lines.length * 4, 6) + 2;
+      });
+
+      doc.save(`Calendario_E${equipoNum}_${meses[parseInt(mes)]}_${ano}.pdf`);
+    }
+
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message show ${type}`;
+    }
+  </script>
+</body>
+</html>
