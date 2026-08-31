@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Agente de Calendarios - CREAR</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1f35 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #60a5fa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .panel {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #e2e8f0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    select:hover, input:hover {
+      border-color: rgba(148, 163, 184, 0.6);
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-generate {
+      background: linear-gradient(135deg, #3b82f6, #1e40af);
+      color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-generate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .format-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .format-btn {
+      padding: 10px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .format-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.success {
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: #34d399;
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+
+    .info-box {
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .info-box h3 {
+      color: #22d3ee;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-box li {
+      padding: 6px 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .info-box li:before {
+      content: "✓ ";
+      color: #34d399;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .loading {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>📅 Agente de Automatización de Calendarios</h1>
+      <p style="color: #94a3b8; font-size: 13px;">Sistema inteligente para generar calendarios mensuales</p>
+    </header>
+
+    <!-- Main Panel -->
+    <div class="panel">
+      <h2>🎯 Generador de Calendarios</h2>
+
+      <div class="info-box">
+        <h3>ℹ️ Información</h3>
+        <p>Selecciona el equipo, mes y año para generar un calendario profesional en Excel o PDF. Sin necesidad de backend - funciona 100% en tu navegador.</p>
+      </div>
+
+      <form id="calendarForm">
+        <!-- Sede -->
+        <div class="form-group">
+          <label for="sede">🏢 Selecciona Sede</label>
+          <select id="sede" required>
+            <option value="">-- Seleccionar Sede --</option>
+            <option value="LIMA">LIMA</option>
+          </select>
+        </div>
+
+        <!-- Equipo -->
+        <div class="form-group">
+          <label for="equipo">⚽ Selecciona Equipo</label>
+          <select id="equipo" required>
+            <option value="">-- Seleccionar Equipo --</option>
+            <option value="EQUIPO 5">EQUIPO 5</option>
+            <option value="EQUIPO 7">EQUIPO 7</option>
+            <option value="EQUIPO 8">EQUIPO 8</option>
+            <option value="EQUIPO 9">EQUIPO 9</option>
+            <option value="EQUIPO 10">EQUIPO 10</option>
+            <option value="EQUIPO 11">EQUIPO 11</option>
+            <option value="EQUIPO 12">EQUIPO 12</option>
+            <option value="EQUIPO 13">EQUIPO 13</option>
+            <option value="EQUIPO 14">EQUIPO 14</option>
+            <option value="EQUIPO 15">EQUIPO 15</option>
+            <option value="EQUIPO 16">EQUIPO 16</option>
+            <option value="EQUIPO 17">EQUIPO 17</option>
+            <option value="EQUIPO 18">EQUIPO 18</option>
+            <option value="EQUIPO 19">EQUIPO 19</option>
+            <option value="EQUIPO 20">EQUIPO 20</option>
+            <option value="EQUIPO 21">EQUIPO 21</option>
+            <option value="EQUIPO 22">EQUIPO 22</option>
+            <option value="EQUIPO 23">EQUIPO 23</option>
+            <option value="EQUIPO 24">EQUIPO 24</option>
+            <option value="EQUIPO 25">EQUIPO 25</option>
+            <option value="EQUIPO 26">EQUIPO 26</option>
+            <option value="EQUIPO 27">EQUIPO 27</option>
+            <option value="EQUIPO 28">EQUIPO 28</option>
+            <option value="EQUIPO 29">EQUIPO 29</option>
+            <option value="EQUIPO 30">EQUIPO 30</option>
+          </select>
+        </div>
+
+        <!-- Mes y Año -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group">
+            <label for="mes">📆 Mes</label>
+            <select id="mes" required>
+              <option value="1">Enero</option>
+              <option value="2">Febrero</option>
+              <option value="3">Marzo</option>
+              <option value="4">Abril</option>
+              <option value="5">Mayo</option>
+              <option value="6">Junio</option>
+              <option value="7">Julio</option>
+              <option value="8" selected>Agosto</option>
+              <option value="9">Septiembre</option>
+              <option value="10">Octubre</option>
+              <option value="11">Noviembre</option>
+              <option value="12">Diciembre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ano">📅 Año</label>
+            <select id="ano" required>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Formato -->
+        <div class="form-group">
+          <label>📄 Formato de Exportación</label>
+          <div class="format-selector">
+            <button type="button" class="format-btn active" data-format="excel" onclick="setFormat('excel')">
+              📊 Excel
+            </button>
+            <button type="button" class="format-btn" data-format="pdf" onclick="setFormat('pdf')">
+              📄 PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="button-group">
+          <button type="button" class="btn-generate" onclick="generateCalendar()">
+            ✨ Generar
+          </button>
+          <a href="https://github.com/crearpodersinlimitesperu-cmd/dashboard-psl" target="_blank" style="display: flex; align-items: center; justify-content: center; padding: 14px; border-radius: 8px; background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); color: #60a5fa; text-decoration: none;">
+            🔗 GitHub
+          </a>
+        </div>
+
+        <div id="message" class="message"></div>
+      </form>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="panel">
+      <h2>💡 Características</h2>
+      <div class="info-box">
+        <h3>Capacidades</h3>
+        <ul>
+          <li>Generación automática en el navegador</li>
+          <li>Filtrado por Sede y Equipo</li>
+          <li>Exportación a Excel y PDF</li>
+          <li>Formato profesional</li>
+          <li>Descarga directa</li>
+          <li>Sin servidor - 100% gratis</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedFormat = 'excel';
+    const mesNombres = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    function setFormat(format) {
+      selectedFormat = format;
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-format="${format}"]`).classList.add('active');
+    }
+
+    function generarDiasDelMes(mes, ano) {
+      const fecha = new Date(ano, mes - 1, 1);
+      const diasEnMes = new Date(ano, mes, 0).getDate();
+      const dias = [];
+
+      for (let i = 1; i <= diasEnMes; i++) {
+        dias.push({
+          dia: i,
+          diaSemana: new Date(ano, mes - 1, i).getDay()
+        });
+      }
+      return dias;
+    }
+
+    function generarCalendarExcel() {
+      const sede = document.getElementById('sede').value;
+      const equipo = document.getElementById('equipo').value;
+      const mes = parseInt(document.getElementById('mes').value);
+      const ano = parseInt(document.getElementById('ano').value);
+
+      const wb = XLSX.utils.book_new();
+      const wsData = [];
+
+      wsData.push(['CALENDARIO MENSUAL - CREAR']);
+      wsData.push(['']);
+      wsData.push([`Sede: ${sede} | Equipo: ${equipo}`]);
+      wsData.push([`${mesNombres[mes]} ${ano}`]);
+      wsData.push(['']);
+
+      wsData.push(['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM']);
+
+      const dias = generarDiasDelMes(mes, ano);
+      const primerDia = dias[0].diaSemana;
+      const filaSemana = new Array(primerDia === 0 ? 6 : primerDia - 1).fill('');
+
+      dias.forEach(d => {
+        filaSemana.push(d.dia);
+        if (filaSemana.length === 7) {
+          wsData.push([...filaSemana]);
+          filaSemana.length = 0;
+        }
+      });
+
+      if (filaSemana.length > 0) {
+        wsData.push(filaSemana);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Calendario');
+      XLSX.writeFile(wb, `Calendario_${sede}_${equipo}_${mesNombres[mes]}_${ano}.xlsx`);
+    }
+
+    function generarCalendarPDF() {
+      const sede = document.getElementById('sede').value;
+      const equipo = document.getElementById('equipo').value;
+      const mes = parseInt(document.getElementById('mes').value);
+      const ano = parseInt(document.getElementById('ano').value);
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'letter');
+
+      doc.setFontSize(20);
+      doc.text('CALENDARIO MENSUAL', 105, 20, { align: 'center' });
+
+      doc.setFontSize(12);
+      doc.text(`${mesNombres[mes]} ${ano}`, 105, 30, { align: 'center' });
+      doc.text(`Sede: ${sede} | Equipo: ${equipo}`, 105, 40, { align: 'center' });
+
+      const dias = generarDiasDelMes(mes, ano);
+      const diaSemanas = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
+
+      let y = 50;
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      diaSemanas.forEach((d, i) => {
+        doc.text(d, 20 + i * 25, y);
+      });
+
+      y += 10;
+      doc.setFont(undefined, 'normal');
+
+      const primerDia = dias[0].diaSemana;
+      const columnaInicio = primerDia === 0 ? 6 : primerDia - 1;
+      let columna = columnaInicio;
+
+      dias.forEach(d => {
+        doc.text(d.dia.toString(), 20 + columna * 25, y);
+        columna++;
+
+        if (columna >= 7) {
+          columna = 0;
+          y += 8;
+        }
+      });
+
+      doc.save(`Calendario_${sede}_${equipo}_${mesNombres[mes]}_${ano}.pdf`);
+    }
+
+    function generateCalendar() {
+      const sede = document.getElementById('sede').value;
+      const equipo = document.getElementById('equipo').value;
+
+      if (!sede || !equipo) {
+        showMessage('Por favor selecciona Sede y Equipo', 'error');
+        return;
+      }
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading">⏳</span> Generando...';
+
+      setTimeout(() => {
+        try {
+          if (selectedFormat === 'excel') {
+            generarCalendarExcel();
+          } else {
+            generarCalendarPDF();
+          }
+          showMessage(`✓ Calendario ${selectedFormat.toUpperCase()} generado y descargado: ${sede} ${equipo}`, 'success');
+        } catch (error) {
+          showMessage(`❌ Error: ${error.message}`, 'error');
+        }
+        btn.disabled = false;
+        btn.innerHTML = '✨ Generar';
+      }, 500);
+    }
+
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message show ${type}`;
+    }
+  </script>
+</body>
+</html>
