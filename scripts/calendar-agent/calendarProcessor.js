@@ -2,425 +2,258 @@ const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const { promisify } = require('util');
 
 class CalendarProcessor {
-  constructor(sourceFile) {
-    this.sourceFile = sourceFile;
+  constructor() {
+    this.masterFile = path.join(__dirname, '../../public/uploads/calendario-maestro.xlsx');
+    this.logoFile = path.join(__dirname, '../../public/uploads/logo-crear.pdf');
     this.workbook = null;
-    this.sedes = [];
-    this.equipos = [];
-    this.calendarData = {};
   }
 
-  async loadCalendar() {
-    this.workbook = new ExcelJS.Workbook();
-    await this.workbook.xlsx.readFile(this.sourceFile);
-    await this.extractMetadata();
+  async loadMasterCalendar() {
+    if (!this.workbook) {
+      this.workbook = new ExcelJS.Workbook();
+      await this.workbook.xlsx.readFile(this.masterFile);
+    }
   }
 
-  async extractMetadata() {
-    const sheets = this.workbook.worksheets;
-
-    sheets.forEach(sheet => {
-      const sheetName = sheet.name.trim();
-
-      // Buscar nombres de equipos en los headers
-      const firstRow = sheet.getRow(1);
-      if (firstRow && firstRow.values) {
-        firstRow.values.forEach((cell, idx) => {
-          if (cell && cell.toString().includes('EQUIPO')) {
-            const equipoName = cell.toString().trim();
-            if (!this.equipos.includes(equipoName)) {
-              this.equipos.push(equipoName);
-              this.calendarData[equipoName] = this.parseSheet(sheet);
-            }
-          }
+  // Obtener lista de equipos disponibles
+  async getEquipos() {
+    await this.loadMasterCalendar();
+    const equipos = [];
+    this.workbook.worksheets.forEach(sheet => {
+      const match = sheet.name.match(/E(\d+)/);
+      if (match) {
+        const numEquipo = parseInt(match[1]);
+        equipos.push({
+          num: numEquipo,
+          nombre: `EQUIPO ${numEquipo}`,
+          sheet: sheet.name
         });
       }
-
-      // También buscar en hojas que representen sedes
-      const sedePatterns = ['LIM', 'UIO', 'GYE', 'CUE', 'MED', 'CDMX'];
-      if (sedePatterns.some(p => sheetName.includes(p))) {
-        const sedeName = sheetName.toUpperCase();
-        if (!this.sedes.includes(sedeName)) {
-          this.sedes.push(sedeName);
-        }
-      }
     });
-
-    // Asegurar que EQUIPO 30 esté en la lista
-    if (!this.equipos.includes('EQUIPO 30')) {
-      this.equipos.push('EQUIPO 30');
-    }
-
-    // Si no se encontraron equipos, crear lista completa (5 a 30)
-    if (this.equipos.length <= 1) {
-      const equipoNums = [5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
-      this.equipos = [];
-      equipoNums.forEach(num => {
-        this.equipos.push(`EQUIPO ${num}`);
-      });
-    }
-
-    // Ordenar equipos numéricamente
-    this.equipos.sort((a, b) => {
-      const numA = parseInt(a.split(' ')[1]);
-      const numB = parseInt(b.split(' ')[1]);
-      return numA - numB;
-    });
-
-    // Si no se encontraron sedes, usar LIMA
-    if (this.sedes.length === 0) {
-      this.sedes = ['LIMA'];
-    }
+    return equipos.sort((a, b) => a.num - b.num);
   }
 
-  parseSheet(sheet) {
-    const data = [];
-    const headers = [];
+  // Extraer eventos de una hoja de equipo para un mes específico
+  async extractEventsForTeam(equipoNum, mes, ano) {
+    await this.loadMasterCalendar();
 
-    sheet.eachRow((row, rowNumber) => {
-      const cells = row.values || [];
+    const sheetName = `E${equipoNum}`;
+    const sheet = this.workbook.getWorksheet(sheetName);
 
-      if (rowNumber === 1) {
-        headers.push(...cells);
-      } else if (cells.length > 0) {
-        const item = {
-          actividad: cells[1],
-          fecha: cells[2],
-          hora: cells[3],
-          rowData: cells
-        };
+    if (!sheet) {
+      return [];
+    }
 
-        // Buscar índices de columnas de equipos
-        headers.forEach((header, idx) => {
-          if (header && header.toString().includes('EQUIPO')) {
-            item[header.toString().trim()] = cells[idx];
-          }
+    const eventos = [];
+    const mesNum = parseInt(mes);
+
+    // Leer las filas y extraer eventos
+    sheet.eachRow((row, rowNum) => {
+      if (rowNum <= 1) return; // Skip header
+
+      const actividad = row.getCell(1).value;
+      const fecha = row.getCell(2).value;
+      const hora = row.getCell(3).value;
+
+      if (!actividad || !fecha) return;
+
+      // Parsear fecha
+      let fechaObj = null;
+
+      if (fecha instanceof Date) {
+        fechaObj = fecha;
+      } else if (typeof fecha === 'string') {
+        // Intentar parsear strings como "DEL 6 AL 8 DE SEPTIEMBRE"
+        const fechaParsed = this.parseFechaString(fecha, ano);
+        if (fechaParsed) {
+          fechaObj = fechaParsed.start;
+        }
+      } else if (typeof fecha === 'number') {
+        // Excel date number
+        fechaObj = new Date((fecha - 25569) * 86400 * 1000);
+      }
+
+      if (fechaObj && fechaObj.getMonth() + 1 === mesNum && fechaObj.getFullYear() === parseInt(ano)) {
+        eventos.push({
+          actividad: actividad.toString().trim(),
+          fecha: fechaObj,
+          hora: hora ? hora.toString().trim() : '',
+          dia: fechaObj.getDate()
         });
-
-        data.push(item);
       }
     });
 
-    return data;
+    // Ordenar por día
+    eventos.sort((a, b) => a.dia - b.dia);
+    return eventos;
   }
 
-  getSedes() {
-    return this.sedes;
-  }
-
-  getEquipos() {
-    return this.equipos.sort();
-  }
-
-  async generateMonthlyCalendar(sede, equipo, month, year) {
-    try {
-      const newWorkbook = new ExcelJS.Workbook();
-      const safeName = `${sede}_${equipo.replace(/\s+/g, '_')}_${month}_${year}`.substring(0, 31);
-      const worksheet = newWorkbook.addWorksheet(safeName);
-
-      // Crear encabezado
-      worksheet.addRow([`CALENDARIO ${equipo} - ${this.getMonthName(month)} ${year}`]);
-      const headerRow = worksheet.getRow(1);
-      headerRow.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
-      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
-      headerRow.height = 25;
-
-      // Espaciador
-      worksheet.addRow([]);
-
-      // Crear tabla de calendarios
-      this.createCalendarTable(worksheet, sede, equipo, month, year);
-
-      // Ajustar anchos de columna
-      worksheet.columns = [
-        { width: 30 },
-        { width: 20 },
-        { width: 20 },
-        { width: 15 },
-        { width: 20 },
-        { width: 15 },
-        { width: 30 }
-      ];
-
-      return newWorkbook;
-    } catch (error) {
-      console.error('Error generating calendar:', error);
-      throw error;
-    }
-  }
-
-  setupStyles(worksheet) {
-    worksheet.pageSetup = {
-      paperSize: 9, // A4
-      orientation: 'landscape'
-    };
-    worksheet.pageMargins = {
-      left: 0.5,
-      right: 0.5,
-      top: 0.5,
-      bottom: 0.5
-    };
-  }
-
-  createCalendarTable(worksheet, sede, equipo, month, year) {
-    // Headers
-    const headers = ['ACTIVIDAD', 'FECHA', 'HORA', 'UBICACIÓN', 'RESPONSABLE', 'ESTADO', 'NOTAS'];
-    const headerRow = worksheet.addRow(headers);
-
-    // Estilo para headers
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF70AD47' } };
-
-    // Obtener datos del equipo seleccionado
-    const data = this.calendarData[equipo] || [];
-
-    // Agregar datos filtrados por mes
-    if (data.length > 0) {
-      data.forEach(item => {
-        if (item && item.actividad) {
-          const actividad = String(item.actividad).substring(0, 100);
-          const fecha = this.parseFecha(item.fecha);
-
-          // Incluir eventos si no hay filtro de mes o si coincide el mes
-          if (!fecha || !fecha.year || (fecha.month === month && fecha.year === year)) {
-            worksheet.addRow([
-              actividad,
-              this.formatFecha(item.fecha),
-              this.formatHora(item.hora),
-              sede,
-              '',
-              'PENDIENTE',
-              ''
-            ]);
-          }
-        }
-      });
-    }
-
-    // Agregar filas vacías para edición
-    for (let i = 0; i < 5; i++) {
-      const row = worksheet.addRow(['', '', '', sede, '', 'PENDIENTE', '']);
-      row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0' } };
-    }
-  }
-
-  formatFecha(fecha) {
-    if (!fecha) return '';
-    if (fecha instanceof Date) {
-      return fecha.toLocaleDateString('es-ES');
-    }
-    return String(fecha).substring(0, 50);
-  }
-
-  formatHora(hora) {
-    if (!hora) return '';
-    if (hora instanceof Date) {
-      return hora.toLocaleTimeString('es-ES');
-    }
-    return String(hora).substring(0, 30);
-  }
-
-  parseFecha(fechaStr) {
-    if (!fechaStr) return null;
-
-    // Si es una fecha de Excel
-    if (fechaStr instanceof Date) {
-      return {
-        month: fechaStr.getMonth() + 1,
-        year: fechaStr.getFullYear()
-      };
-    }
-
-    // Convertir a string si es date o número
-    const dateString = fechaStr.toString ? fechaStr.toString().toUpperCase() : '';
-
-    // Si es una fórmula, ignorar
-    if (dateString.includes('=') || dateString.includes('+')) {
-      return null;
-    }
+  parseFechaString(str, ano) {
+    if (!str) return null;
 
     const meses = {
-      'ENERO': 1, 'JANUARY': 1, 'JAN': 1,
-      'FEBRERO': 2, 'FEBRUARY': 2, 'FEB': 2,
-      'MARZO': 3, 'MARCH': 3, 'MAR': 3,
-      'ABRIL': 4, 'APRIL': 4, 'APR': 4,
-      'MAYO': 5, 'MAY': 5,
-      'JUNIO': 6, 'JUNE': 6, 'JUN': 6,
-      'JULIO': 7, 'JULY': 7, 'JUL': 7,
-      'AGOSTO': 8, 'AUGUST': 8, 'AUG': 8,
-      'SEPTIEMBRE': 9, 'SEPTEMBER': 9, 'SEP': 9,
-      'OCTUBRE': 10, 'OCTOBER': 10, 'OCT': 10,
-      'NOVIEMBRE': 11, 'NOVEMBER': 11, 'NOV': 11,
-      'DICIEMBRE': 12, 'DECEMBER': 12, 'DEC': 12
+      'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5,
+      'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9,
+      'octubre': 10, 'noviembre': 11, 'diciembre': 12
     };
 
-    let month = null, year = null;
+    const strLower = str.toLowerCase();
 
-    // Buscar nombre de mes
-    for (const [mesNombre, mesNum] of Object.entries(meses)) {
-      if (dateString.includes(mesNombre)) {
-        month = mesNum;
-        break;
+    // Try "DEL 6 AL 8 DE SEPTIEMBRE"
+    const match = strLower.match(/del? (\d+)\s+al? (\d+)\s+de\s+(\w+)/);
+    if (match) {
+      const dia = parseInt(match[1]);
+      const mesStr = match[3];
+      const mes = meses[mesStr];
+      if (mes) {
+        return {
+          start: new Date(parseInt(ano), mes - 1, dia),
+          end: new Date(parseInt(ano), mes - 1, parseInt(match[2]))
+        };
       }
     }
 
-    // Buscar año en formato 20XX
-    const yearMatch = dateString.match(/20\d{2}/);
-    if (yearMatch) {
-      year = parseInt(yearMatch[0]);
+    // Try "6 DE SEPTIEMBRE"
+    const match2 = strLower.match(/(\d+)\s+de\s+(\w+)/);
+    if (match2) {
+      const dia = parseInt(match2[1]);
+      const mesStr = match2[2];
+      const mes = meses[mesStr];
+      if (mes) {
+        return {
+          start: new Date(parseInt(ano), mes - 1, dia)
+        };
+      }
     }
 
-    return month || year ? { month, year } : null;
+    return null;
   }
 
-  getMonthName(month) {
-    const meses = ['', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-                   'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-    return meses[month] || '';
-  }
+  // Generar PDF con los eventos
+  async generatePDF(equipoNum, mes, ano, sede) {
+    const eventos = await this.extractEventsForTeam(equipoNum, mes, ano);
 
-  async saveCalendar(workbook, fileName) {
-    const outputDir = path.join(__dirname, '../../public/calendars');
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    const doc = new PDFDocument({
+      size: 'letter',
+      margin: 40
+    });
+
+    const fileName = `Calendario_E${equipoNum}_${mes}_${ano}.pdf`;
+    const filePath = path.join(__dirname, '../../downloads', fileName);
+
+    // Crear directorio si no existe
+    if (!fs.existsSync(path.dirname(filePath))) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
     }
 
-    const filePath = path.join(outputDir, `${fileName}.xlsx`);
-    try {
-      await workbook.xlsx.writeFile(filePath);
-    } catch (error) {
-      // Si hay error, intentar con opciones alternativas
-      console.error('Error saving file:', error.message);
-      // Crear un nuevo workbook simplificado
-      const simpleWb = new ExcelJS.Workbook();
-      const ws = simpleWb.addWorksheet('Calendar');
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
 
-      // Copiar datos del worksheet original
-      const originalWs = workbook.worksheets[0];
-      if (originalWs) {
-        originalWs.eachRow((row, rowNumber) => {
-          const newRow = ws.addRow(row.values);
-          if (row.font) newRow.font = row.font;
-          if (row.fill) newRow.fill = row.fill;
-        });
-      }
+    // Header con logo
+    doc.fontSize(20).font('Helvetica-Bold').text('CALENDARIO DEL EQUIPO', 50, 40, { align: 'center' });
 
-      await simpleWb.xlsx.writeFile(filePath);
-    }
-    return filePath;
-  }
+    // Info
+    doc.fontSize(12).font('Helvetica');
+    doc.text(`Sede: ${sede} | Equipo: EQUIPO ${equipoNum}`, 50, 70, { align: 'center' });
 
-  async generatePDF(sede, equipo, month, year) {
-    try {
-      const doc = new PDFDocument({ margin: 40 });
-      const fileName = `${sede}_${equipo.replace(/\s+/g, '_')}_${this.getMonthName(month)}_${year}`;
-      const outputDir = path.join(__dirname, '../../public/calendars');
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-      const filePath = path.join(outputDir, `${fileName}.pdf`);
+    const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    doc.fontSize(16).font('Helvetica-Bold').text(`${meses[parseInt(mes)]} ${ano}`, 50, 90, { align: 'center' });
 
-      // Agregar logo si existe
-      const logoPath = path.join(__dirname, '../../public/uploads/logo-crear.pdf');
-      if (fs.existsSync(logoPath)) {
-        try {
-          doc.image(logoPath, 50, 20, { width: 100, height: 30 });
-        } catch (logoError) {
-          console.warn('No se pudo agregar el logo:', logoError.message);
-        }
-      }
+    // Línea separadora
+    doc.moveTo(50, 110).lineTo(550, 110).stroke();
 
-      // Encabezado
-      doc.fontSize(24).font('Helvetica-Bold').text(`CALENDARIO ${equipo}`, 150, 40);
-      doc.fontSize(12).font('Helvetica').text(`Sede: ${sede} | Mes: ${this.getMonthName(month)} ${year}`, 150, 70);
-      doc.moveTo(40, 110).lineTo(550, 110).stroke();
+    // Tabla de eventos
+    let yPos = 130;
+    doc.fontSize(11).font('Helvetica-Bold');
 
-      // Tabla de datos
-      const data = this.calendarData[equipo] || [];
-      const tableTop = 140;
-      const colWidths = [100, 80, 60, 80, 70, 60, 80];
-      const headers = ['ACTIVIDAD', 'FECHA', 'HORA', 'UBICACIÓN', 'RESPONSABLE', 'ESTADO', 'NOTAS'];
-      const rows = [];
+    // Headers de tabla
+    doc.text('DÍA', 60, yPos);
+    doc.text('ACTIVIDAD', 100, yPos);
+    doc.text('HORA', 450, yPos);
 
-      // Agregar datos filtrados por mes
-      if (data.length > 0) {
-        data.forEach(item => {
-          if (item && item.actividad) {
-            const actividad = String(item.actividad).substring(0, 50);
-            const fecha = this.parseFecha(item.fecha);
+    yPos += 20;
+    doc.moveTo(50, yPos - 5).lineTo(550, yPos - 5).stroke();
 
-            if (!fecha || !fecha.year || (fecha.month === month && fecha.year === year)) {
-              rows.push([
-                actividad,
-                this.formatFecha(item.fecha),
-                this.formatHora(item.hora),
-                sede,
-                '',
-                'PENDIENTE',
-                ''
-              ]);
-            }
-          }
-        });
-      }
+    // Contenido
+    doc.font('Helvetica').fontSize(10);
 
-      // Si no hay datos, agregar filas vacías
-      if (rows.length === 0) {
-        for (let i = 0; i < 5; i++) {
-          rows.push(['', '', '', sede, '', 'PENDIENTE', '']);
-        }
-      }
-
-      // Dibujar tabla
-      doc.fontSize(10).font('Helvetica-Bold');
-      let yPosition = tableTop;
-
-      // Headers
-      doc.fillColor('#4472C4').rect(40, yPosition, 510, 25).fill();
-      doc.fillColor('#FFFFFF');
-      headers.forEach((header, i) => {
-        const x = 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
-        doc.text(header, x + 5, yPosition + 5, { width: colWidths[i] - 10, height: 20 });
-      });
-
-      yPosition += 25;
-      doc.fillColor('#000000').font('Helvetica');
-
-      // Rows
-      rows.forEach((row, rowIdx) => {
-        if (yPosition > 700) {
+    if (eventos.length === 0) {
+      doc.text('No hay actividades programadas para este período', 60, yPos + 10);
+    } else {
+      eventos.forEach(evento => {
+        if (yPos > 700) {
           doc.addPage();
-          yPosition = 40;
+          yPos = 50;
         }
 
-        const rowHeight = 30;
-        doc.rect(40, yPosition, 510, rowHeight).stroke();
+        doc.text(evento.dia.toString(), 60, yPos);
 
-        row.forEach((cell, colIdx) => {
-          const x = 40 + colWidths.slice(0, colIdx).reduce((a, b) => a + b, 0);
-          doc.fontSize(9).text(String(cell), x + 5, yPosition + 5, { width: colWidths[colIdx] - 10, height: rowHeight - 10 });
-        });
+        // Texto de actividad (puede ser multiline)
+        const actividadText = evento.actividad.substring(0, 60);
+        doc.text(actividadText, 100, yPos);
 
-        yPosition += rowHeight;
+        doc.text(evento.hora, 450, yPos);
+
+        yPos += 20;
+        doc.moveTo(50, yPos - 5).lineTo(550, yPos - 5).stroke('lightgray');
       });
-
-      // Footer
-      doc.fontSize(8).fillColor('#666666');
-      doc.text(`Generado por Sistema de Calendarios | ${new Date().toLocaleString('es-ES')}`, 40, 750, { align: 'center' });
-
-      return new Promise((resolve, reject) => {
-        doc.pipe(fs.createWriteStream(filePath));
-        doc.on('end', () => resolve(filePath));
-        doc.on('error', reject);
-        doc.end();
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      throw error;
     }
+
+    // Footer
+    doc.fontSize(8).text('Generado por Sistema CREAR - Automatización de Calendarios', 50, 750, { align: 'center' });
+
+    doc.end();
+
+    return new Promise((resolve, reject) => {
+      stream.on('finish', () => resolve(fileName));
+      stream.on('error', reject);
+    });
+  }
+
+  // Generar Excel con los eventos
+  async generateExcel(equipoNum, mes, ano, sede) {
+    const eventos = await this.extractEventsForTeam(equipoNum, mes, ano);
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Calendario');
+
+    // Headers
+    ws.columns = [
+      { header: 'DÍA', key: 'dia', width: 10 },
+      { header: 'ACTIVIDAD', key: 'actividad', width: 40 },
+      { header: 'HORA', key: 'hora', width: 20 }
+    ];
+
+    // Estilo headers
+    ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0066CC' } };
+
+    // Datos
+    eventos.forEach(evento => {
+      ws.addRow({
+        dia: evento.dia,
+        actividad: evento.actividad,
+        hora: evento.hora
+      });
+    });
+
+    // Auto-fit columns
+    ws.columns.forEach(col => {
+      col.width = Math.min(50, col.header.length + 10);
+    });
+
+    const fileName = `Calendario_E${equipoNum}_${mes}_${ano}.xlsx`;
+    const filePath = path.join(__dirname, '../../downloads', fileName);
+
+    if (!fs.existsSync(path.dirname(filePath))) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    }
+
+    await wb.xlsx.writeFile(filePath);
+    return fileName;
   }
 }
 
