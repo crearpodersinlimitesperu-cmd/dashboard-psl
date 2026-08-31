@@ -8,12 +8,17 @@ class CalendarProcessor {
     this.masterFile = path.join(__dirname, '../../public/uploads/calendario-maestro.xlsx');
     this.logoFile = path.join(__dirname, '../../public/uploads/logo-crear.pdf');
     this.workbook = null;
+    this.workbookDataOnly = null;
   }
 
   async loadMasterCalendar() {
     if (!this.workbook) {
       this.workbook = new ExcelJS.Workbook();
       await this.workbook.xlsx.readFile(this.masterFile);
+
+      // También cargar con datos calculados
+      this.workbookDataOnly = new ExcelJS.Workbook();
+      await this.workbookDataOnly.xlsx.readFile(this.masterFile, { formulas: false });
     }
   }
 
@@ -40,33 +45,35 @@ class CalendarProcessor {
     await this.loadMasterCalendar();
 
     const sheetName = `E${equipoNum}`;
-    const sheet = this.workbook.getWorksheet(sheetName);
+    const sheet = this.workbookDataOnly.getWorksheet(sheetName);
 
     if (!sheet) {
+      console.warn(`Hoja ${sheetName} no encontrada`);
       return [];
     }
 
     const eventos = [];
     const mesNum = parseInt(mes);
+    const anoNum = parseInt(ano);
 
     // Leer las filas y extraer eventos
     sheet.eachRow((row, rowNum) => {
       if (rowNum <= 1) return; // Skip header
 
       const actividad = row.getCell(1).value;
-      const fecha = row.getCell(2).value;
+      const fechaCell = row.getCell(30); // Columna AD (30)
       const hora = row.getCell(3).value;
 
-      if (!actividad || !fecha) return;
+      if (!actividad) return;
 
-      // Parsear fecha
+      const fecha = fechaCell.value;
       let fechaObj = null;
 
       if (fecha instanceof Date) {
         fechaObj = fecha;
       } else if (typeof fecha === 'string') {
         // Intentar parsear strings como "DEL 6 AL 8 DE SEPTIEMBRE"
-        const fechaParsed = this.parseFechaString(fecha, ano);
+        const fechaParsed = this.parseFechaString(fecha, anoNum);
         if (fechaParsed) {
           fechaObj = fechaParsed.start;
         }
@@ -75,7 +82,8 @@ class CalendarProcessor {
         fechaObj = new Date((fecha - 25569) * 86400 * 1000);
       }
 
-      if (fechaObj && fechaObj.getMonth() + 1 === mesNum && fechaObj.getFullYear() === parseInt(ano)) {
+      // Verificar si la fecha está en el mes seleccionado
+      if (fechaObj && fechaObj.getMonth() + 1 === mesNum && fechaObj.getFullYear() === anoNum) {
         eventos.push({
           actividad: actividad.toString().trim(),
           fecha: fechaObj,
@@ -87,6 +95,7 @@ class CalendarProcessor {
 
     // Ordenar por día
     eventos.sort((a, b) => a.dia - b.dia);
+    console.log(`Encontrados ${eventos.length} eventos para EQUIPO ${equipoNum} en ${mes}/${ano}`);
     return eventos;
   }
 
@@ -109,8 +118,8 @@ class CalendarProcessor {
       const mes = meses[mesStr];
       if (mes) {
         return {
-          start: new Date(parseInt(ano), mes - 1, dia),
-          end: new Date(parseInt(ano), mes - 1, parseInt(match[2]))
+          start: new Date(ano, mes - 1, dia),
+          end: new Date(ano, mes - 1, parseInt(match[2]))
         };
       }
     }
@@ -123,7 +132,7 @@ class CalendarProcessor {
       const mes = meses[mesStr];
       if (mes) {
         return {
-          start: new Date(parseInt(ano), mes - 1, dia)
+          start: new Date(ano, mes - 1, dia)
         };
       }
     }
@@ -151,7 +160,7 @@ class CalendarProcessor {
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Header con logo
+    // Header
     doc.fontSize(20).font('Helvetica-Bold').text('CALENDARIO DEL EQUIPO', 50, 40, { align: 'center' });
 
     // Info
